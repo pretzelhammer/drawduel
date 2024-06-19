@@ -10,8 +10,10 @@
     "dev-backend": "tsx watch --tsconfig tsconfig.backend.json ./src/backend/server.ts"
   },
   "dependencies": {
+    "@types/ws": "^8.5.10",
     "express": "^4.19.2",
-    "preact": "^10.19.6"
+    "preact": "^10.19.6",
+    "ws": "^8.17.1"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.8.2",

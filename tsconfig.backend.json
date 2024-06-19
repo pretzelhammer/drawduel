@@ -22,6 +22,6 @@
     "outDir": "./dist-backend",
     "rootDir": "./src"
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/backend"],
   "exclude": ["node_modules"]
 }

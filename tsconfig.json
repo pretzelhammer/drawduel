@@ -23,10 +23,10 @@
 
     /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false, // maybe set back to true later
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": ["src/frontend"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

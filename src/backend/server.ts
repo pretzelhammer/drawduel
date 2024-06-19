@@ -1,19 +1,63 @@
-import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import util from 'util';
+import express from 'express';
+import http from 'http';
+import { WebSocketServer, RawData } from 'ws';
+import { Buffer } from 'buffer';
 
-function log(...args: any[]) {
+function _log(...args: any[]) {
 	console.log(util.inspect(args, { depth: null }));
 }
 
-const app = express();
-const port = process.env.PORT || 9001;
+function rawDataToString(rawData: RawData): string {
+	let buffer: Buffer;
+	if (Array.isArray(rawData)) {
+		// If it's an array of Buffers, concatenate them into a single Buffer
+		buffer = Buffer.concat(rawData);
+	} else if (rawData instanceof ArrayBuffer) {
+		// If it's an ArrayBuffer, convert it to a Buffer
+		buffer = Buffer.from(rawData);
+	} else {
+		// Otherwise, assume it's already a Buffer
+		buffer = rawData;
+	}
+	// Convert the Buffer to a string
+	return buffer.toString('utf-8');
+}
 
 const cwd = process.cwd();
+
+// Create an Express app
+const app = express();
 
 // Middleware to serve static files from the ./dist directory
 app.use(express.static(path.join(cwd, './dist')));
 
-app.listen(port, () => {
+const server = http.createServer(app);
+
+// Create a WebSocket server
+const wss = new WebSocketServer({ server });
+
+// Handle WebSocket connections
+wss.on('connection', function connection(ws, _request) {
+	console.log('A new client connected!');
+
+	ws.on('message', function incoming(rawData: RawData, _isBinary) {
+		const message = rawDataToString(rawData);
+		if (message === 'PING') {
+			ws.send('PONG');
+		}
+	});
+
+	ws.on('error', console.error);
+
+	ws.on('open', function open() {
+		ws.send('Hello client!');
+	});
+});
+
+const port = process.env.PORT || 9001;
+
+server.listen(port, () => {
 	console.log(`Server is running at http://localhost:${port}`);
 });

@@ -7,4 +7,9 @@ export default defineConfig({
 	server: {
 		port: 9000,
 	},
+	// build: {
+	// 	rollupOptions: {
+	// 		external: ['src/backend/**']
+	// 	},
+	// },
 });
