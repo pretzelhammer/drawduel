@@ -9,7 +9,7 @@ pwd
 git --work-tree=$WORKTREE --git-dir=$GIT_DIR checkout --force main
 pwd
 
-# test
+# test 2
 
 source /root/.nvm/nvm.sh
 current_version=$(nvm current)
