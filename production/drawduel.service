@@ -7,7 +7,7 @@ Environment=NODE_ENV=production
 Type=simple
 User=root
 WorkingDirectory=/root/drawduel
-ExecStart=npm start
+ExecStart=/root/drawduel/production/start.sh
 Restart=on-failure
 RestartSec=30
 KillMode=process
