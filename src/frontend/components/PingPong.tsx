@@ -8,6 +8,7 @@ const PingPong = () => {
 
 	useEffect(() => {
 		const newSocket = new WebSocket('ws://localhost:9001');
+		newSocket.addEventListener('message', getMessage);
 		newSocket.addEventListener('open', () => {
 			console.log('WebSocket connection established.');
 			setSocket(newSocket);
@@ -20,21 +21,10 @@ const PingPong = () => {
 			setSocket(null);
 		});
 		return () => {
+			newSocket.removeEventListener('message', getMessage);
 			newSocket.close();
 		};
 	}, []);
-
-	useEffect(() => {
-		if (socket) {
-			socket.addEventListener('message', getMessage);
-		}
-
-		return () => {
-			if (socket) {
-				socket.removeEventListener('message', getMessage);
-			}
-		};
-	}, [socket]);
 
 	const getMessage = (event: MessageEvent) => {
 		setGotMessages((prevMessages) => [...prevMessages, event.data]);
@@ -51,13 +41,6 @@ const PingPong = () => {
 		<>
 			<h2>WebSocket Client</h2>
 			<button onClick={() => sendMessage('PING')}>Send PING</button>
-			{/*
-			<ul>
-				{sentMessages.map((message, index) => (
-					<li key={index}>Sent {message}</li>
-				))}
-			</ul>
-			*/}
 			<ul className={classes.list}>
 				{gotMessages.map((message, index) => (
 					<li key={index}>Got {message}</li>

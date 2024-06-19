@@ -40,7 +40,9 @@ const wss = new WebSocketServer({ server });
 
 // Handle WebSocket connections
 wss.on('connection', function connection(ws, _request) {
-	console.log('A new client connected!');
+	console.log('client connected');
+
+	ws.on('error', console.error);
 
 	ws.on('message', function incoming(rawData: RawData, _isBinary) {
 		const message = rawDataToString(rawData);
@@ -49,11 +51,7 @@ wss.on('connection', function connection(ws, _request) {
 		}
 	});
 
-	ws.on('error', console.error);
-
-	ws.on('open', function open() {
-		ws.send('Hello client!');
-	});
+	ws.send('Hello from server!');
 });
 
 const port = process.env.PORT || 9001;
