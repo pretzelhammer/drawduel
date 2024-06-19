@@ -1,9 +1,12 @@
 #!/bin/bash
 
+WORKTREE=/root/drawduel
+GIT_DIR=/root/drawduel.git
+
 pwd
-cd /root/drawduel
+cd $WORKTREE
 pwd
-git pull
+git --work-tree=$WORKTREE --git-dir=$GIT_DIR checkout --force main
 pwd
 
 # test
@@ -14,12 +17,12 @@ target_version=$(<"/root/drawduel/.nvmrc")
 if [ "$current_version" != "$target_version" ]; then
 	nvm install "$desired_version"
 	nvm alias default "$desired_version"
-	rm -rf ./node_modules
+	rm -rf $WORKTREE/node_modules
 fi
 npm ci
 npm run frontend:prod
 
 pwd
-cp ./production/drawduel.service /etc/systemd/system/drawduel.service
+cp $WORKTREE/production/drawduel.service /etc/systemd/system/drawduel.service
 systemctl daemon-reload
 systemctl restart drawduel
