@@ -54,7 +54,10 @@ wss.on('connection', function connection(ws, _request) {
 	ws.send('Hello from server!');
 });
 
-const port = process.env.PORT || 9001;
+let port = 80;
+if (process.env.NODE_ENV === 'development') {
+	port = 9001;
+}
 
 server.listen(port, () => {
 	console.log(`Server is running at http://localhost:${port}`);

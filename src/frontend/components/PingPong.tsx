@@ -7,7 +7,14 @@ const PingPong = () => {
 	const [socket, setSocket] = useState<WebSocket | null>(null);
 
 	useEffect(() => {
-		const newSocket = new WebSocket('ws://localhost:9001');
+		let protocol = 'ws'; // TODO change to wss when we get ssl on prod
+		let host = window.location.host;
+		if (import.meta.env.DEV) {
+			protocol = 'ws';
+			host = 'localhost:9001';
+		}
+		const wsUrl = `${protocol}://${host}`;
+		const newSocket = new WebSocket(wsUrl);
 		newSocket.addEventListener('message', getMessage);
 		newSocket.addEventListener('open', () => {
 			console.log('WebSocket connection established.');
