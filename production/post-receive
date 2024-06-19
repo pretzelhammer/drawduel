@@ -2,7 +2,10 @@
 
 while read oldrev newrev refname
 do
-    if [[ $refname = "refs/heads/main" ]]; then
-        /root/drawduel/production/on-receive.sh
-    fi
+	if [[ $refname = "refs/heads/main" ]]; then
+		WORKTREE=/root/drawduel
+		GIT_DIR=/root/drawduel.git
+		git --work-tree=$WORKTREE --git-dir=$GIT_DIR checkout --force main
+		$WORKTREE/production/on-receive.sh
+	fi
 done

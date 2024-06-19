@@ -3,4 +3,6 @@
 source /root/.nvm/nvm.sh
 cd /root/drawduel
 nvm use
-npm start
+
+# https://unix.stackexchange.com/a/196053
+exec npm start
