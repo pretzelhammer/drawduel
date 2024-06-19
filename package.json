@@ -1,13 +1,14 @@
 {
-  "name": "vite-project",
+  "name": "drawduel",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "dev-frontend": "vite",
+    "prod-frontend": "tsc && vite build",
     "preview": "vite preview",
-    "dev-backend": "tsx watch --tsconfig tsconfig.backend.json ./src/backend/server.ts"
+    "dev-backend": "tsx watch --tsconfig tsconfig.backend.json ./src/backend/server.ts",
+    "prod-backend": "tsx --tsconfig tsconfig.backend.json ./src/backend/server.ts"
   },
   "dependencies": {
     "@types/ws": "^8.5.10",

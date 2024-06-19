@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import classes from './pingpong.module.css';
+import classes from './PingPongTwo.module.css';
 
 const PingPong = () => {
 	const [sentMessages, setSentMessages] = useState<string[]>([]);
