@@ -46,7 +46,7 @@ const PingPong = () => {
 
 	return (
 		<>
-			<h2>WebSocket Client</h2>
+			<h2>websocket client</h2>
 			<button onClick={() => sendMessage('PING')}>Send PING</button>
 			<ul className={classes.list}>
 				{gotMessages.map((message, index) => (
