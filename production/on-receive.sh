@@ -1,7 +1,10 @@
 #!/bin/bash
 
+pwd
 cd /root/drawduel
+pwd
 git pull
+pwd
 
 source /root/.nvm/nvm.sh
 current_version=$(nvm current)
@@ -14,6 +17,7 @@ fi
 npm ci
 npm run frontend:prod
 
+pwd
 cp ./production/drawduel.service /etc/systemd/system/drawduel.service
 systemctl daemon-reload
 systemctl restart drawduel
