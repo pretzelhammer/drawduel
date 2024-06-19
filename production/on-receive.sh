@@ -6,6 +6,8 @@ pwd
 git pull
 pwd
 
+# test
+
 source /root/.nvm/nvm.sh
 current_version=$(nvm current)
 target_version=$(<"/root/drawduel/.nvmrc")
