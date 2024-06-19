@@ -3,13 +3,8 @@
 WORKTREE=/root/drawduel
 GIT_DIR=/root/drawduel.git
 
-pwd
 cd $WORKTREE
-pwd
 git --work-tree=$WORKTREE --git-dir=$GIT_DIR checkout --force main
-pwd
-
-# test 2
 
 source /root/.nvm/nvm.sh
 current_version=$(nvm current)
@@ -22,7 +17,6 @@ fi
 npm ci
 npm run frontend:prod
 
-pwd
 cp $WORKTREE/production/drawduel.service /etc/systemd/system/drawduel.service
 systemctl daemon-reload
 systemctl restart drawduel

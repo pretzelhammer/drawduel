@@ -51,7 +51,7 @@ wss.on('connection', function connection(ws, _request) {
 		}
 	});
 
-	ws.send('Hello from server!!');
+	ws.send('Testing 123 from server?');
 });
 
 let port = 80;
