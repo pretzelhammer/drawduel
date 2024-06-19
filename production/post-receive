@@ -1,0 +1,8 @@
+#!/bin/bash
+
+while read oldrev newrev refname
+do
+    if [[ $refname = "refs/heads/main" ]]; then
+        /root/drawduel/production/on-receive.sh
+    fi
+done

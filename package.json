@@ -4,11 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev-frontend": "vite",
-    "prod-frontend": "tsc && vite build",
-    "preview": "vite preview",
-    "dev-backend": "tsx watch --tsconfig tsconfig.backend.json ./src/backend/server.ts",
-    "prod-backend": "tsx --tsconfig tsconfig.backend.json ./src/backend/server.ts"
+    "start": "npm run backend:prod",
+    "frontend:dev": "NODE_ENV=development vite",
+    "frontend:prod": "NODE_ENV=production tsc && NODE_ENV=production vite build",
+    "backend:dev": "NODE_ENV=development tsx watch --tsconfig tsconfig.backend.json ./src/backend/server.ts",
+    "backend:prod": "NODE_ENV=production tsx --tsconfig tsconfig.backend.json ./src/backend/server.ts"
   },
   "dependencies": {
     "@types/ws": "^8.5.10",

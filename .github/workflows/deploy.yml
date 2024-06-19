@@ -1,0 +1,34 @@
+
+# this is WIP, so commented out for now
+
+# name: Deploy
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Set up ssh
+#         run: |
+#           mkdir -p ~/.ssh
+#           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+#           chmod 600 ~/.ssh/id_rsa
+#           ssh-keyscan -H 24.144.66.20 >> ~/.ssh/known_hosts
+
+#       - name: Configure git
+#         run: |
+#           git config --global user.name 'github-actions[bot]'
+#           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+#       - name: Push to production
+#         run: |
+#           git remote add production root@24.144.66.20:username/repo.git
+#           git push production main

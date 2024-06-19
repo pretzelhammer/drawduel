@@ -1,0 +1,16 @@
+[Unit]
+Description=drawduel
+After=network.target
+
+[Service]
+Environment=NODE_ENV=production
+Type=simple
+User=root
+WorkingDirectory=/root/drawduel
+ExecStart=npm start
+Restart=on-failure
+RestartSec=30
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
