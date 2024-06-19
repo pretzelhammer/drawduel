@@ -1,3 +1,4 @@
+import { resolve } from 'path';
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
 
@@ -7,9 +8,18 @@ export default defineConfig({
 	server: {
 		port: 9000,
 	},
-	// build: {
-	// 	rollupOptions: {
-	// 		external: ['src/backend/**']
-	// 	},
-	// },
+	// https://medium.com/@pushplaybang/absolutely-dont-use-relative-paths-imports-in-your-vite-react-project-c8593f93bbea
+	resolve: {
+		alias: {
+			src: "/src",
+		},
+	},
+	build: {
+		rollupOptions: {
+			input: {
+				index: resolve(__dirname, 'index.html'),
+				game: resolve(__dirname, 'game/index.html'),
+			},
+		},
+	},
 });

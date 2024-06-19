@@ -20,7 +20,10 @@
     "esModuleInterop": true, // https://stackoverflow.com/a/62099904/2766908
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist-backend",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "paths": {
+      "src/*": ["./src/*"]
+    },
   },
   "include": ["src/backend"],
   "exclude": ["node_modules"]

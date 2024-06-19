@@ -1,5 +1,5 @@
-import PingPong from '../components/PingPongTwo.tsx';
-import './app.css';
+import PingPong from 'src/frontend/components/PingPong.tsx';
+import 'src/frontend/game/app.css';
 
 export function App() {
 	return (
