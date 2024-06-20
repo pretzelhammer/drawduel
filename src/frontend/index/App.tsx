@@ -1,5 +1,4 @@
 import { randomShortCode } from 'src/agnostic/utils.ts';
-import PingPong from 'src/frontend/components/PingPong.tsx';
 import 'src/frontend/index/app.css';
 
 export function App() {
@@ -8,10 +7,10 @@ export function App() {
 	return (
 		<>
 			<h1>draw duel 🎨⚔️</h1>
+			<h2>home page</h2>
 			<a class="button" href={gameLink}>
 				new game
 			</a>
-			<PingPong />
 		</>
 	);
 }

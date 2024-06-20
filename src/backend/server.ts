@@ -51,7 +51,7 @@ wss.on('connection', function connection(ws, _request) {
 		}
 	});
 
-	ws.send('github deploy workflow WORKS!');
+	ws.send('Hello from server!');
 });
 
 let port = 80;
