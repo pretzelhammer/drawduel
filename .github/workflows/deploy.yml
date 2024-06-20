@@ -1,34 +1,27 @@
+name: Deploy to production
 
-# this is WIP, so commented out for now
+on:
+  push:
+    branches:
+      - main
 
-# name: Deploy
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-# on:
-#   push:
-#     branches:
-#       - main
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-# jobs:
-#   deploy:
-#     runs-on: ubuntu-latest
+      - name: Setup ssh
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_PRIVATE_KEY }}
 
-#     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v4
-
-#       - name: Set up ssh
-#         run: |
-#           mkdir -p ~/.ssh
-#           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
-#           chmod 600 ~/.ssh/id_rsa
-#           ssh-keyscan -H 24.144.66.20 >> ~/.ssh/known_hosts
-
-#       - name: Configure git
-#         run: |
-#           git config --global user.name 'github-actions[bot]'
-#           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-
-#       - name: Push to production
-#         run: |
-#           git remote add production root@24.144.66.20:username/repo.git
-#           git push production main
+      - name: Push to production
+        run: |
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git remote add production root@${{ secrets.DEPLOY_HOST }}:/root/drawduel.git
+          git push production main:main
