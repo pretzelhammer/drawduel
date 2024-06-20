@@ -7,8 +7,10 @@ const PingPong = () => {
 	const [socket, setSocket] = useState<WebSocket | null>(null);
 
 	useEffect(() => {
-		let protocol = 'ws'; // TODO change to wss when we get ssl on prod
+		// prod uses ssl and same domain for ws connections
+		let protocol = 'wss';
 		let host = window.location.host;
+		// dev doesn't have ssl and ws server is on different domain
 		if (import.meta.env.DEV) {
 			protocol = 'ws';
 			host = 'localhost:9999';
