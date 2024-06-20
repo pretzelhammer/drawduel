@@ -1,4 +1,4 @@
-# try 2
+# try 3
 
 name: Deploy to production
 
@@ -26,4 +26,4 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git remote add production root@${{ secrets.DEPLOY_HOST }}:/root/drawduel.git
-          git push production main:main
+          git push --force production main:main
