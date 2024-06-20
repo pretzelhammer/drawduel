@@ -1,4 +1,4 @@
-# try 3
+# try 4
 
 name: Deploy to production
 
@@ -14,6 +14,9 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
       - name: Setup ssh
         uses: webfactory/ssh-agent@v0.9.0
