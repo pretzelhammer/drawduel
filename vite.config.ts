@@ -6,7 +6,7 @@ import preact from '@preact/preset-vite';
 export default defineConfig({
 	plugins: [preact()],
 	server: {
-		port: 9000,
+		port: 8888,
 	},
 	// https://medium.com/@pushplaybang/absolutely-dont-use-relative-paths-imports-in-your-vite-react-project-c8593f93bbea
 	resolve: {

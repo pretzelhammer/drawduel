@@ -56,7 +56,7 @@ wss.on('connection', function connection(ws, _request) {
 
 let port = 80;
 if (process.env.NODE_ENV === 'development') {
-	port = 9001;
+	port = 9999;
 }
 
 server.listen(port, () => {

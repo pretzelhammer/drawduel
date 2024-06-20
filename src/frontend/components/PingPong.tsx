@@ -11,7 +11,7 @@ const PingPong = () => {
 		let host = window.location.host;
 		if (import.meta.env.DEV) {
 			protocol = 'ws';
-			host = 'localhost:9001';
+			host = 'localhost:9999';
 		}
 		const wsUrl = `${protocol}://${host}`;
 		const newSocket = new WebSocket(wsUrl);
