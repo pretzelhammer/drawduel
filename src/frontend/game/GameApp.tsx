@@ -1,7 +1,7 @@
 import PingPong from 'src/frontend/components/PingPong.tsx';
-import 'src/frontend/game/app.css';
+import 'src/frontend/game/game-app.css';
 
-export function App() {
+export default function GameApp() {
 	return (
 		<>
 			<h1>draw duel 🎨⚔️</h1>
@@ -9,4 +9,4 @@ export function App() {
 			<PingPong />
 		</>
 	);
-}
+};

@@ -1,7 +1,7 @@
 import { render } from 'preact';
-import { App } from 'src/frontend/game/App.tsx';
+import GameApp from 'src/frontend/game/GameApp.tsx';
 import 'src/frontend/global.css';
 
-render(<App />, document.getElementById('app')!);
+render(<GameApp />, document.getElementById('game-app')!);
 
 

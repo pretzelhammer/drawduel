@@ -1,7 +1,7 @@
 import { randomShortCode } from 'src/agnostic/utils.ts';
-import 'src/frontend/index/app.css';
+import 'src/frontend/index/index-app.css';
 
-export function App() {
+export default function IndexApp() {
 	const shortCode = randomShortCode();
 	const gameLink = `/game/#${shortCode}`;
 	return (
@@ -13,4 +13,4 @@ export function App() {
 			</a>
 		</>
 	);
-}
+};

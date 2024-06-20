@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import classes from 'src/frontend/components/PingPong.module.css';
 
-const PingPong = () => {
+export default function PingPong() {
 	const [sentMessages, setSentMessages] = useState<string[]>([]);
 	const [gotMessages, setGotMessages] = useState<string[]>([]);
 	const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -58,5 +58,3 @@ const PingPong = () => {
 		</>
 	);
 };
-
-export default PingPong;

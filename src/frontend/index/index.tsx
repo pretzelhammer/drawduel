@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { App } from 'src/frontend/index/App.tsx';
+import IndexApp from 'src/frontend/index/IndexApp.tsx';
 import 'src/frontend/global.css';
 
-render(<App />, document.getElementById('app')!);
+render(<IndexApp />, document.getElementById('index-app')!);
