@@ -76,6 +76,56 @@ We proxy through Cloudflare, which gives us SSL/TLS, http -> https redirects, an
 
 [TypeScript](https://www.typescriptlang.org/). Contains all code that can or needs to run on both the frontend and backend like: game logic, general utilities, etc.
 
+### code style conventions
+
+All imports should use an absolute url:
+
+```ts
+// ❌ - No
+import { randomShortId } from '../../agnostic/random.ts';
+import './global.css';
+
+// ✅ - Yes!
+import { randomShortId } from 'src/agnostic/random.ts';
+import 'src/frontend/global.css';
+```
+
+All imports should contain an extension:
+
+```ts
+// ❌ - No
+import Button from 'src/frontend/components/Button'
+import utils from 'src/agnostic/utils';
+import 'src/frontend/global';
+
+// ✅ - Yes!
+import Button from 'src/frontend/components/Button.tsx'
+import utils from 'src/agnostic/utils.ts';
+import 'src/frontend/global.css';
+```
+
+Import only specific functions from `lodash`, not the entire lib:
+
+```ts
+// ❌ - No
+import { isObject } from 'lodash-es';
+
+// ✅ - Yes!
+import isObject from 'lodash-es/isObject';
+```
+
+Prefix type imports with the `type` keyword:
+
+```ts
+// ❌ - No
+import { GameState, PlayerId } from 'src/agnostic/gameState.ts';
+
+// ✅ - Yes!
+import { type GameState, type PlayerId } from 'src/agnostic/gameState.ts';
+```
+
+We should probably add [eslint](https://eslint.org/) to this project to catch those cases when we have time. Don't want to go down an eslint config rabbit hole right now.
+
 ### general Qs & As
 
 _"During hackweek should I push my work directly to `main` or make PRs and get reviews?"_

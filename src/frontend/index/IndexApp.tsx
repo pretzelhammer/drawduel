@@ -1,4 +1,4 @@
-import { randomShortId } from 'src/agnostic/utils.ts';
+import { randomShortId } from 'src/agnostic/random.ts';
 import 'src/frontend/index/index-app.css';
 
 export default function IndexApp() {

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'preact/hooks';
 import classes from 'src/frontend/components/PingPong.module.css';
+import { type VNode } from 'preact';
 
-export default function PingPong() {
+export default function PingPong(): VNode {
 	const [sentMessages, setSentMessages] = useState<string[]>([]);
 	const [gotMessages, setGotMessages] = useState<string[]>([]);
 	const [socket, setSocket] = useState<WebSocket | null>(null);
