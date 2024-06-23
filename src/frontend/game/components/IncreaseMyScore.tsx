@@ -1,5 +1,5 @@
 import { FunctionalComponent } from 'preact';
-import { useClientContext } from '../game/ClientContextProvider';
+import { useClientContext } from '../ClientContextProvider';
 
 export const IncreaseMyScore: FunctionalComponent = () => {
 	let [clientContext, dispatchGameEvent] = useClientContext();

@@ -8,6 +8,7 @@
 	font-family: Schoolbell, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 	line-height: 1.5;
 	font-weight: 400;
+	font-size: 16px;
 
 	color: #101010;
 	background-color: #fffad4;
@@ -73,4 +74,19 @@ input {
 	text-align: center;
 	outline: 0;
 	font-family: inherit;
+}
+
+table {
+	border-collapse: separate;
+	border-spacing: 8px;
+}
+
+th,
+td {
+	padding: 8px 12px;
+	text-align: left;
+}
+
+th {
+	font-size: 20px;
 }
