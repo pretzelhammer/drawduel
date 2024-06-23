@@ -18,7 +18,7 @@ export const IndexApp: FunctionalComponent = () => {
 			<h1>draw duel 🎨⚔️</h1>
 			<h2>home page</h2>
 			<div class={classes['button-group']}>
-				<a class="button" href={newGameLink}>
+				<a class={`button ${classes['button__new-game']}`} href={newGameLink}>
 					new game
 				</a>
 				<div class={classes['join-game']}>
@@ -27,7 +27,7 @@ export const IndexApp: FunctionalComponent = () => {
 						value={joinGameId}
 						onInput={(event) => setJoinGameId((event.target as HTMLInputElement).value)}
 					/>
-					<a class="button" href={joinGameLink}>
+					<a class={`button button--purple ${classes['button__join-game']}`} href={joinGameLink}>
 						join game
 					</a>
 				</div>

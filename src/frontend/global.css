@@ -56,6 +56,15 @@ button:focus-visible {
 	outline: 4px auto -webkit-focus-ring-color;
 }
 
+.button--purple {
+	background-color: #fac7ff;
+	box-shadow: -6px 6px #ad55b6;
+}
+.button:active.button--purple,
+button:active.button--purple {
+	box-shadow: -3px 3px #ad55b6;
+}
+
 input {
 	background-color: transparent;
 	border: 0;
