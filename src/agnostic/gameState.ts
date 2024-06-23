@@ -48,7 +48,7 @@ export function initGameState(gameId: GameId): GameState {
 	};
 }
 
-export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean {
+export function canAdvance(_gameState: GameState, _gameEvent: GameEvent): boolean {
 	// TODO implement
 	return true;
 }
