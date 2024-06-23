@@ -3,20 +3,23 @@ import { useCallback, useContext, useState, useEffect, useRef } from 'preact/hoo
 import { Socket } from 'socket.io-client';
 import { type ServerEvent } from 'src/agnostic/events.ts';
 import { canAdvance, advance, type GameEvent } from 'src/agnostic/gameState.ts';
-import { type ClientState, initClientContext, type ClientContext } from 'src/frontend/game/clientContext.ts';
+import {
+	type ClientState,
+	initClientContext,
+	type ClientContext,
+	dummyClientContext,
+} from 'src/frontend/game/clientContext.ts';
 import { connect } from 'src/frontend/game/utils/sockets.ts';
 import { Maybe } from 'src/agnostic/types.ts';
 
-const initialClientContext = initClientContext();
-
 type UseClientContext = [
 	ClientContext,
-	(gameEvent: GameEvent) => void, // dispatch game event
+	(gameEvent: GameEvent) => void, // dispatch game events
 	(clientState: ClientState) => void, // set client state
 ];
 
 const ClientContextKey = createContext<UseClientContext>([
-	initialClientContext,
+	dummyClientContext(),
 	(_gameEvent: GameEvent) => {},
 	(_clientState: ClientState) => {},
 ]);
@@ -26,15 +29,15 @@ function useClientContext(): UseClientContext {
 }
 
 const ClientContextProvider: FunctionalComponent = ({ children }) => {
-	const [clientContext, setClientContext] = useState(initialClientContext);
+	const [clientContext, setClientContext] = useState(initClientContext());
 	let socket = useRef<Maybe<Socket>>(null);
 
 	useEffect(() => {
 		socket.current = connect(
-			initialClientContext.gameState.id,
-			initialClientContext.clientState.player.id,
-			initialClientContext.clientState.player.pass,
-			initialClientContext.clientState.player.placeholderName,
+			clientContext.gameState.id,
+			clientContext.clientState.player.id,
+			clientContext.clientState.player.pass,
+			clientContext.clientState.player.placeholderName,
 		);
 		socket.current.on('event', (event: ServerEvent) => {
 			console.log('GOT EVENT FROM SERVER:', event);

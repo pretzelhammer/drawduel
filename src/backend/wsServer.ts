@@ -11,6 +11,7 @@ import {
 } from 'src/backend/serverContext.ts';
 import {
 	GameEvent,
+	GamePlayer,
 	GameState,
 	JoinEvent,
 	LeftEvent,
@@ -21,6 +22,7 @@ import {
 } from 'src/agnostic/gameState.ts';
 import { type ServerEvent, type ClientError } from 'src/agnostic/events.ts';
 import { validGameId, validName, validPass, validPlayerId } from 'src/agnostic/validation';
+import { Maybe } from 'src/agnostic/types';
 
 const wsOptions: Partial<ServerOptions> = {};
 
@@ -48,6 +50,31 @@ function correctPass(gameId: GameId, playerId: PlayerId, pass: string): boolean 
 	// existing player, must check pass is correct
 	if (serverPlayerState.pass !== pass) {
 		return false;
+	}
+
+	return true;
+}
+
+function hasPermission(playerId: PlayerId, gameId: GameId, gameEvent: GameEvent): boolean {
+	const gameState = serverContext[gameId].gameState;
+	const player: Maybe<GamePlayer> = gameState.players[playerId];
+	if (!player) {
+		return false;
+	}
+	if (gameEvent.type === 'join') {
+		// players can only join themselves
+		return playerId === gameEvent.data.id;
+	} else if (gameEvent.type === 'left') {
+		// players can only leave themselves
+		return playerId === gameEvent.data;
+	} else if (gameEvent.type === 'inc-player-score') {
+		// atm we have a button that allows players
+		// to increase their own score but it's just for
+		// testing since that's obviously nonsense from
+		// a game perspective, the only thing that should have
+		// to power to increase or decrease scores is the server
+		// so we may change this later
+		return playerId === gameEvent.data.id;
 	}
 
 	return true;
@@ -157,8 +184,10 @@ export function setupWsServer(httpServer: HttpServer) {
 		if (!gameState.players[playerId]) {
 			// create and broadcast join event to all players in game
 			const joinEvent: JoinEvent = { type: 'join', data: { id: playerId, name } };
-			advanceServerGame(gameId, joinEvent);
-			emitAll(joinEvent);
+			if (canAdvanceServerGame(gameId, joinEvent)) {
+				advanceServerGame(gameId, joinEvent);
+				emitAll(joinEvent);
+			}
 		}
 
 		socket.on('disconnect', (reason: string) => {
@@ -172,8 +201,10 @@ export function setupWsServer(httpServer: HttpServer) {
 			} else {
 				// notify other players that this player left
 				const leftEvent: LeftEvent = { type: 'left', data: playerId };
-				advanceServerGame(gameId, leftEvent);
-				emitAll(leftEvent);
+				if (canAdvanceServerGame(gameId, leftEvent)) {
+					advanceServerGame(gameId, leftEvent);
+					emitAll(leftEvent);
+				}
 			}
 		});
 
@@ -181,7 +212,9 @@ export function setupWsServer(httpServer: HttpServer) {
 		// players in game, including back to player
 		// who sent us this event
 		socket.on('event', (gameEvent: GameEvent) => {
-			if (canAdvanceServerGame(gameId, gameEvent)) {
+			// check that the player who produced this event has the permission
+			// to produce it, and check that it will advance the game state
+			if (hasPermission(playerId, gameId, gameEvent) && canAdvanceServerGame(gameId, gameEvent)) {
 				advanceServerGame(gameId, gameEvent);
 				emitAll(gameEvent);
 			} else {

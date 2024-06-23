@@ -48,8 +48,18 @@ export function initGameState(gameId: GameId): GameState {
 	};
 }
 
-export function canAdvance(_gameState: GameState, _gameEvent: GameEvent): boolean {
-	// TODO implement
+export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean {
+	if (gameEvent.type === 'join') {
+		// player can only join if they aren't already in the game
+		return !gameState.players[gameEvent.data.id];
+	} else if (gameEvent.type === 'left') {
+		// player can only leave if they exist and have zero score
+		const player: Maybe<GamePlayer> = gameState.players[gameEvent.data];
+		return player && player.score === 0;
+	} else if (gameEvent.type === 'inc-player-score') {
+		// can only increase the score of players who exist
+		return !!gameState.players[gameEvent.data.id];
+	}
 	return true;
 }
 
@@ -59,20 +69,10 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 			...gameEvent.data,
 			score: 0,
 		};
-		return gameState;
 	} else if (gameEvent.type === 'left') {
-		const player: Maybe<GamePlayer> = gameState.players[gameEvent.data];
-		// only remove player from game if their score is 0
-		if (player && player.score === 0) {
-			delete gameState.players[gameEvent.data];
-		}
-		return gameState;
+		delete gameState.players[gameEvent.data];
 	} else if (gameEvent.type === 'inc-player-score') {
-		const player: Maybe<GamePlayer> = gameState.players[gameEvent.data.id];
-		if (player) {
-			player.score += gameEvent.data.score;
-		}
-		return gameState;
+		gameState.players[gameEvent.data.id].score += gameEvent.data.score;
 	}
 	return gameState;
 }

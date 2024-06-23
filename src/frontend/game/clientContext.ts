@@ -26,6 +26,27 @@ export interface ClientPlayerPersonas {
 	[key: PlayerId]: ClientPlayerState;
 }
 
+export function dummyClientContext(): ClientContext {
+	return {
+		gameState: initGameState('dummygame'),
+		clientState: dummyClientState(),
+	};
+}
+
+export function dummyClientState(): ClientState {
+	return {
+		player: dummyPlayerState(),
+	};
+}
+
+export function dummyPlayerState(): ClientPlayerState {
+	return {
+		id: 'dummyplayer',
+		pass: 'dummypass',
+		placeholderName: 'dummyname',
+	};
+}
+
 export function initClientContext(): ClientContext {
 	const gameId = parseGameId();
 	return {
