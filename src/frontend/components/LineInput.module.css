@@ -1,7 +1,7 @@
 .line {
 	background-image: url('/public/assets/line.png');
 	background-size: cover;
-	opacity: .5;
+	opacity: 0.5;
 	width: 256px;
 	height: 8px;
 }
