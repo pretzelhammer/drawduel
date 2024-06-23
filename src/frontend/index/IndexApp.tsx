@@ -9,7 +9,10 @@ export const IndexApp: FunctionalComponent = () => {
 	const newGameId = randomShortId();
 	const newGameLink = `/game/#${newGameId}`;
 	const [joinGameId, setJoinGameId] = useState('');
-	const joinGameLink = `/game/#${joinGameId}`;
+	let joinGameLink = `/game/#${joinGameId}`;
+	if (!joinGameId) {
+		joinGameLink = '';
+	}
 	return (
 		<>
 			<h1>draw duel 🎨⚔️</h1>
