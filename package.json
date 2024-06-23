@@ -10,7 +10,8 @@
     "backend:dev": "NODE_ENV=development tsx watch --tsconfig tsconfig.backend.json ./src/backend/server.ts",
     "backend:prod": "NODE_ENV=production tsx --tsconfig tsconfig.backend.json ./src/backend/server.ts",
     "prod": "npm run frontend:prod && npm run backend:prod",
-    "dev": "concurrently \"npm run frontend:dev\" \"npm run backend:dev\""
+    "dev": "concurrently \"npm run frontend:dev\" \"npm run backend:dev\"",
+		"prettier": "prettier --write \"src/**/*.{js,ts,tsx,css,json,md}\""
   },
   "dependencies": {
     "express": "^4.19.2",

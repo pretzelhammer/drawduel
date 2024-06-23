@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'preact/hooks';
 import classes from 'src/frontend/components/PingPong.module.css';
-import { type VNode } from 'preact';
+import { type FunctionalComponent } from 'preact';
 
-export default function PingPong(): VNode {
+export const PingPong: FunctionalComponent = () => {
 	const [sentMessages, setSentMessages] = useState<string[]>([]);
 	const [gotMessages, setGotMessages] = useState<string[]>([]);
 	const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -51,7 +51,7 @@ export default function PingPong(): VNode {
 		<>
 			<h2>websocket client</h2>
 			<button onClick={() => sendMessage('PING')}>Send PING</button>
-			<ul className={classes.list}>
+			<ul class={classes.list}>
 				{gotMessages.map((message, index) => (
 					<li key={index}>Got {message}</li>
 				))}
