@@ -1,18 +1,13 @@
 import { createContext, type FunctionalComponent } from 'preact';
-import { useCallback, useContext, useState } from 'preact/hooks';
-import { type GameEvent } from 'src/agnostic/gameState.ts';
+import { useCallback, useContext, useState, useEffect, useRef } from 'preact/hooks';
+import { Socket } from 'socket.io-client';
+import { type ServerEvent } from 'src/agnostic/events.ts';
+import { canAdvance, advance, type GameEvent } from 'src/agnostic/gameState.ts';
 import { type ClientState, initClientContext, type ClientContext } from 'src/frontend/game/clientContext.ts';
-import { connect } from 'src/frontend/game/utils/sockets';
+import { connect } from 'src/frontend/game/utils/sockets.ts';
+import { Maybe } from 'src/agnostic/types.ts';
 
 const initialClientContext = initClientContext();
-console.log('initial client context', initialClientContext);
-
-const socket = connect();
-socket.on('message', (message: string) => {
-	console.log('GOT FROM SERVER:', message);
-});
-console.log('SENT TO SERVER: PING');
-socket.emit('message', 'PING');
 
 type UseClientContext = [
 	ClientContext,
@@ -32,21 +27,68 @@ function useClientContext(): UseClientContext {
 
 const ClientContextProvider: FunctionalComponent = ({ children }) => {
 	const [clientContext, setClientContext] = useState(initialClientContext);
+	let socket = useRef<Maybe<Socket>>(null);
+
+	useEffect(() => {
+		socket.current = connect(
+			initialClientContext.gameState.id,
+			initialClientContext.clientState.player.id,
+			initialClientContext.clientState.player.pass,
+			initialClientContext.clientState.player.placeholderName,
+		);
+		socket.current.on('event', (event: ServerEvent) => {
+			console.log('GOT EVENT FROM SERVER:', event);
+			switch (event.type) {
+				case 'client-error':
+					console.error('got client errors:', event.data);
+					break;
+				case 'server-error':
+					console.error('got server errors:', event.data);
+					break;
+				case 'set-game-state':
+					// https://dmitripavlutin.com/react-hooks-stale-closures/
+					setClientContext((currentClientContext) => ({
+						...currentClientContext,
+						gameState: event.data,
+					}));
+					break;
+				default:
+					// https://dmitripavlutin.com/react-hooks-stale-closures/
+					setClientContext((currentClientContext) => {
+						if (canAdvance(currentClientContext.gameState, event)) {
+							return {
+								...currentClientContext,
+								gameState: advance(currentClientContext.gameState, event),
+							};
+						} else {
+							return currentClientContext;
+						}
+					});
+			}
+		});
+	}, []);
 
 	const dispatchGameEvent = useCallback(
-		(_gameEvent: GameEvent) => {
-			// TODO implement
-			// would use setClientContext somewhere here
+		(gameEvent: GameEvent) => {
+			if (socket.current) {
+				console.log('dispatching game event', gameEvent);
+				socket.current.emit('event', gameEvent);
+			} else {
+				console.error('tried to dispatch game event on null socket', gameEvent);
+			}
 		},
-		[clientContext, setClientContext],
+		[clientContext],
 	);
 
 	const setClientState = useCallback(
-		(_clientState: ClientState) => {
-			// TODO implement
-			// would use setClientContext somewhere here
+		(clientState: ClientState) => {
+			console.log('setting client state', clientState);
+			setClientContext((currentClientContext) => ({
+				...currentClientContext,
+				clientState,
+			}));
 		},
-		[clientContext, setClientContext],
+		[clientContext],
 	);
 
 	return (

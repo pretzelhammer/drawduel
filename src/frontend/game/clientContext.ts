@@ -1,6 +1,6 @@
 import { type GameState, type PlayerId, initGameState } from 'src/agnostic/gameState.ts';
 import { randomLongId, randomPlayerName } from 'src/agnostic/random.ts';
-import { parsePlayerPersona } from 'src/frontend/game/utils/parsing.ts';
+import { parseGameId, parsePlayerPersona } from 'src/frontend/game/utils/parsing.ts';
 import { Maybe } from 'src/agnostic/types.ts';
 import isObject from 'lodash-es/isObject';
 
@@ -19,7 +19,7 @@ export interface ClientState {
 export interface ClientPlayerState {
 	id: PlayerId;
 	pass: string;
-	initialName: string;
+	placeholderName: string;
 }
 
 export interface ClientPlayerPersonas {
@@ -27,8 +27,9 @@ export interface ClientPlayerPersonas {
 }
 
 export function initClientContext(): ClientContext {
+	const gameId = parseGameId();
 	return {
-		gameState: initGameState(),
+		gameState: initGameState(gameId),
 		clientState: initClientState(),
 	};
 }
@@ -55,7 +56,7 @@ function initPlayerState(): ClientPlayerState {
 	if (!playerState) {
 		playerState = generateNewPlayerState();
 		if (playerPersona) {
-			playerState.initialName = playerPersona;
+			playerState.placeholderName = playerPersona;
 		}
 		playerPersonas[playerPersona] = playerState;
 		localStorage.setItem('playerPersonas', JSON.stringify(playerPersonas));
@@ -67,6 +68,6 @@ function generateNewPlayerState(): ClientPlayerState {
 	return {
 		id: randomLongId(),
 		pass: randomLongId(),
-		initialName: randomPlayerName(),
+		placeholderName: randomPlayerName(),
 	};
 }

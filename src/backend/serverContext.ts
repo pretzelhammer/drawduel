@@ -1,11 +1,11 @@
-import { type GameState, type GameId, type PlayerId } from 'src/agnostic/gameState.ts';
+import { type GameState, type GameId, type PlayerId, initGameState } from 'src/agnostic/gameState.ts';
 
 // record of game ids to games
-interface ServerContext {
+export interface ServerContext {
 	[key: GameId]: ServerGameContext;
 }
 
-interface ServerGameContext {
+export interface ServerGameContext {
 	// state of the game, should by in sync
 	// with all clients connected to this game
 	gameState: GameState;
@@ -14,16 +14,33 @@ interface ServerGameContext {
 	serverState: ServerState;
 }
 
-interface ServerState {
+export interface ServerState {
 	players: ServerPlayersState;
 }
 
-interface ServerPlayersState {
+export interface ServerPlayersState {
 	[key: PlayerId]: ServerPlayerState;
 }
 
-interface ServerPlayerState {
+export interface ServerPlayerState {
 	id: string;
 	pass: string;
-	initialName: string;
+	connected: boolean;
+}
+
+export function initServerState(): ServerState {
+	return {
+		players: {},
+	};
+}
+
+export function initServerContext(): ServerContext {
+	return {};
+}
+
+export function initServerGameContext(gameId: GameId): ServerGameContext {
+	return {
+		gameState: initGameState(gameId),
+		serverState: initServerState(),
+	};
 }
