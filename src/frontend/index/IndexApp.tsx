@@ -22,7 +22,7 @@ export default function IndexApp() {
 						value={code}
 						onChange={(event) => setCode((event.target as HTMLInputElement).value)}
 					/>
-					<a className="button" href={`/game/#${code}`}>
+					<a className="button" href={code.length ? `/game/#${code}` : undefined}>
 						join game
 					</a>
 				</div>
