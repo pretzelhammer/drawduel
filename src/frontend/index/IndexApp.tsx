@@ -1,30 +1,31 @@
 import { useState } from 'preact/hooks';
 import { randomShortId } from 'src/agnostic/random.ts';
 import 'src/frontend/index/index-app.css';
-import LineInput from 'src/frontend/components/LineInput.tsx';
-import { ChangeEvent } from 'react';
+import classes from 'src/frontend/index/IndexApp.module.css';
+import { LineInput } from 'src/frontend/components/LineInput.tsx';
 
 export default function IndexApp() {
-	const shortId = randomShortId();
-	const gameLink = `/game/#${shortId}`;
-	const [code, setCode] = useState('');
+	const newGameId = randomShortId();
+	const newGameLink = `/game/#${newGameId}`;
+	const [joinGameId, setJoinGameId] = useState('');
+	const joinGameLink = `/game/#${joinGameId}`;
 	return (
 		<>
 			<h1>draw duel 🎨⚔️</h1>
 			<h2>home page</h2>
-			<div className="button-group">
-				<button className="button" href={gameLink}>
+			<div class={classes['button-group']}>
+				<a class="button" href={newGameLink}>
 					new game
-				</button>
-				<div className="join-game">
+				</a>
+				<div class={classes['join-game']}>
 					<LineInput
-						placeholder="enter 4-letter code"
-						value={code}
-						onChange={(event) => setCode((event.target as HTMLInputElement).value)}
+						placeholder="enter 4-character code"
+						value={joinGameId}
+						onInput={(event) => setJoinGameId((event.target as HTMLInputElement).value)}
 					/>
-					<button className="button" href={`/game/#${code}`}>
+					<a class="button" href={joinGameLink}>
 						join game
-					</button>
+					</a>
 				</div>
 			</div>
 		</>

@@ -63,4 +63,5 @@ input {
 	padding: 4px;
 	text-align: center;
 	outline: 0;
+	font-family: inherit;
 }

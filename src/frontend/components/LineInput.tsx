@@ -1,18 +1,24 @@
-import { ChangeEvent } from 'react';
+import { type FunctionalComponent, type JSX } from 'preact';
 import classes from 'src/frontend/components/LineInput.module.css';
 
 export interface LineInputProps {
 	readonly placeholder: string;
 	readonly value: string;
-	readonly onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+	readonly onInput: JSX.InputEventHandler<HTMLInputElement>;
 }
 
-export default function LineInput(props: LineInputProps) {
-	const { placeholder, value, onChange } = props;
+export const LineInput: FunctionalComponent<LineInputProps> = (props) => {
+	const { placeholder, value, onInput } = props;
 	return (
 		<>
-			<input type="text" value={value} placeholder={placeholder} onChange={onChange} />
-			<div className={classes.line} />
+			{value}
+			<input
+				type="text"
+				value={value}
+				placeholder={placeholder}
+				onInput={onInput}
+			/>
+			<div class={classes.line} />
 		</>
 	);
 }
