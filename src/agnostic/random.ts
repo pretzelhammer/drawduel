@@ -10,7 +10,7 @@ function pickRandomItem<T>(array: T[]): T {
 }
 
 function pickRandomNum(min: number, max: number): number {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 // intentional omissions:
@@ -18,7 +18,7 @@ function pickRandomNum(min: number, max: number): number {
 // - 1 & l, same reason
 // - z & 2, same reason
 // - s & 5, same reason
-const SHORTCODE_CHARS ='abcdefghijkmnpqrtuvwxy346789'
+const SHORTCODE_CHARS = 'abcdefghijkmnpqrtuvwxy346789';
 
 // used in URLs and are visible to users
 // properties:
@@ -48,7 +48,5 @@ export function randomLongId(): string {
 // properties:
 // - adjective + animal + 2 digit number
 export function randomPlayerName(): string {
-	return pickRandomItem(ADJECTIVES)
-		+ pickRandomItem(ANIMALS)
-		+ pickRandomNum(11, 99);
+	return pickRandomItem(ADJECTIVES) + pickRandomItem(ANIMALS) + pickRandomNum(11, 99);
 }

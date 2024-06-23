@@ -14,7 +14,7 @@ export interface ClientContext {
 
 export interface ClientState {
 	player: ClientPlayerState;
-};
+}
 
 export interface ClientPlayerState {
 	id: PlayerId;
@@ -23,7 +23,7 @@ export interface ClientPlayerState {
 }
 
 export interface ClientPlayerPersonas {
-	[key: PlayerId]: ClientPlayerState,
+	[key: PlayerId]: ClientPlayerState;
 }
 
 export function initClientContext(): ClientContext {

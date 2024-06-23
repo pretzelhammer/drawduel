@@ -60,5 +60,5 @@ export function setupWsServer(httpServer: HttpServer) {
 				socket.emit('message', 'PONG');
 			}
 		});
-	})
-};
+	});
+}

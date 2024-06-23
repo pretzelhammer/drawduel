@@ -33,15 +33,21 @@ function useClientContext(): UseClientContext {
 const ClientContextProvider: FunctionalComponent = ({ children }) => {
 	const [clientContext, setClientContext] = useState(initialClientContext);
 
-	const dispatchGameEvent = useCallback((_gameEvent: GameEvent) => {
-		// TODO implement
-		// would use setClientContext somewhere here
-	}, [clientContext, setClientContext]);
+	const dispatchGameEvent = useCallback(
+		(_gameEvent: GameEvent) => {
+			// TODO implement
+			// would use setClientContext somewhere here
+		},
+		[clientContext, setClientContext],
+	);
 
-	const setClientState = useCallback((_clientState: ClientState) => {
-		// TODO implement
-		// would use setClientContext somewhere here
-	}, [clientContext, setClientContext]);
+	const setClientState = useCallback(
+		(_clientState: ClientState) => {
+			// TODO implement
+			// would use setClientContext somewhere here
+		},
+		[clientContext, setClientContext],
+	);
 
 	return (
 		<ClientContextKey.Provider value={[clientContext, dispatchGameEvent, setClientState]}>

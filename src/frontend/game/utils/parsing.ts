@@ -3,10 +3,10 @@
 
 function trimHash(str: string): string {
 	if (str.startsWith('#')) {
-	  return str.slice(1);
+		return str.slice(1);
 	}
 	return str;
-  }
+}
 
 export function parseGameId(): string {
 	let hashString = trimHash(window.location.hash);

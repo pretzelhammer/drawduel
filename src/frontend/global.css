@@ -29,7 +29,8 @@ h1 {
 	line-height: 1.1;
 }
 
-.button, button {
+.button,
+button {
 	color: inherit;
 	border-radius: 8px;
 	padding: 0.6em 1.2em;
@@ -43,10 +44,12 @@ h1 {
 	border: none;
 	text-decoration: none;
 }
-.button:active, button:active {
+.button:active,
+button:active {
 	box-shadow: -3px 3px #2689ac;
 	transform: translate(-3px, 3px);
 }
-.button:focus-visible, button:focus-visible {
+.button:focus-visible,
+button:focus-visible {
 	outline: 4px auto -webkit-focus-ring-color;
 }

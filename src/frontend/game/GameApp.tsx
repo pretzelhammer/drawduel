@@ -8,4 +8,4 @@ export default function GameApp() {
 			<h2>game page</h2>
 		</ClientContextProvider>
 	);
-};
+}
