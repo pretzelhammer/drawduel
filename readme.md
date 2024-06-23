@@ -58,7 +58,7 @@ I don't think we'll need one. Let's see how far we get by just using [`useContex
 
 #### src/backend
 
-[TypeScript](https://www.typescriptlang.org/) + [Express](https://expressjs.com/) + [ws](https://github.com/websockets/ws). Contains all of the backend code for the project like: http routing, websocket server, general backend utilities, etc.
+[TypeScript](https://www.typescriptlang.org/) + [Express](https://expressjs.com/) + [socket.io](https://socket.io/). Contains all of the backend code for the project like: http routing, websocket server, general backend utilities, etc.
 
 Backend code is run using [tsx](https://tsx.is/).
 
@@ -94,12 +94,12 @@ All imports should contain an extension:
 
 ```ts
 // ❌ - No
-import Button from 'src/frontend/components/Button'
+import Button from 'src/frontend/components/Button';
 import utils from 'src/agnostic/utils';
 import 'src/frontend/global';
 
 // ✅ - Yes!
-import Button from 'src/frontend/components/Button.tsx'
+import Button from 'src/frontend/components/Button.tsx';
 import utils from 'src/agnostic/utils.ts';
 import 'src/frontend/global.css';
 ```
@@ -124,7 +124,72 @@ import { GameState, PlayerId } from 'src/agnostic/gameState.ts';
 import { type GameState, type PlayerId } from 'src/agnostic/gameState.ts';
 ```
 
-We should probably add [eslint](https://eslint.org/) to this project to catch those cases when we have time. Don't want to go down an eslint config rabbit hole right now.
+Prefer functional components over class components:
+
+```ts
+// ❌ - No
+import { Component } from 'preact';
+interface MyComponentProps {
+	// etc
+}
+class MyComponent extends Component<MyComponentProps> {
+	// etc
+}
+
+// ✅ - Yes!
+import { type FunctionalComponent } from 'preact';
+interface MyComponentProps {
+	// etc
+}
+const MyComponent: FunctionalComponent<MyComponentProps> = (props) => {
+	// etc
+};
+```
+
+Prefer named exports over default export:
+
+```ts
+// ❌ - No
+const MyComponent: FunctionalComponent = () => {
+	// etc
+};
+export default MyComponent;
+
+// ✅ - Yes!
+export const MyComponent: FunctionalComponent = () => {
+	// etc
+};
+```
+
+Since this is a `preact` and not a `react` project, use the `class` attribute instead of the `className` attribute in JSX:
+
+```tsx
+// ❌ - No
+const MyComponent: FunctionalComponent = () => {
+	return <button className="button">button</button>;
+};
+
+// ✅ - Yes!
+const MyComponent: FunctionalComponent = () => {
+	return <button class="button">button</button>;
+};
+```
+
+Also, since this is a `preact` project and not a `react` project, use the `onInput` event handler on input elements instead of `onChange`:
+
+```tsx
+// ❌ - No
+const MyComponent: FunctionalComponent = (props) => {
+	return <input type="text" onChange={props.onChange} />;
+};
+
+// ✅ - Yes!
+const MyComponent: FunctionalComponent = (props) => {
+	return <input type="text" onInput={props.onInput} />;
+};
+```
+
+We should probably should add [eslint](https://eslint.org/) to this project to catch those cases when we have time. Don't want to go down an eslint config rabbit hole right now.
 
 ### general Qs & As
 

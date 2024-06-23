@@ -3,8 +3,9 @@ import { randomShortId } from 'src/agnostic/random.ts';
 import 'src/frontend/index/index-app.css';
 import classes from 'src/frontend/index/IndexApp.module.css';
 import { LineInput } from 'src/frontend/components/LineInput.tsx';
+import { type FunctionalComponent } from 'preact';
 
-export default function IndexApp() {
+export const IndexApp: FunctionalComponent = () => {
 	const newGameId = randomShortId();
 	const newGameLink = `/game/#${newGameId}`;
 	const [joinGameId, setJoinGameId] = useState('');
@@ -30,4 +31,4 @@ export default function IndexApp() {
 			</div>
 		</>
 	);
-}
+};

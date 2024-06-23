@@ -2,6 +2,10 @@ import { useState, useEffect } from 'preact/hooks';
 import classes from 'src/frontend/components/PingPong.module.css';
 import { type FunctionalComponent } from 'preact';
 
+/**
+ * left here for documentation purposes
+ * @deprecated
+ */
 export const PingPong: FunctionalComponent = () => {
 	const [sentMessages, setSentMessages] = useState<string[]>([]);
 	const [gotMessages, setGotMessages] = useState<string[]>([]);

@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import GameApp from 'src/frontend/game/GameApp.tsx';
+import { GameApp } from 'src/frontend/game/GameApp.tsx';
 import 'src/frontend/global.css';
 import { randomShortId } from 'src/agnostic/random.ts';
 

@@ -11,7 +11,6 @@ export const LineInput: FunctionalComponent<LineInputProps> = (props) => {
 	const { placeholder, value, onInput } = props;
 	return (
 		<>
-			{value}
 			<input type="text" value={value} placeholder={placeholder} onInput={onInput} />
 			<div class={classes.line} />
 		</>
