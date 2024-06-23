@@ -33,7 +33,7 @@ h1 {
 button {
 	color: inherit;
 	border-radius: 8px;
-	padding: 0.6em 1.2em;
+	padding: 10px 48px;
 	font-size: 1em;
 	font-weight: 500;
 	font-family: inherit;
@@ -43,6 +43,8 @@ button {
 	box-shadow: -6px 6px #2689ac;
 	border: none;
 	text-decoration: none;
+	height: fit-content;
+	width: fit-content;
 }
 .button:active,
 button:active {
@@ -52,4 +54,13 @@ button:active {
 .button:focus-visible,
 button:focus-visible {
 	outline: 4px auto -webkit-focus-ring-color;
+}
+
+input {
+	background-color: transparent;
+	border: 0;
+	font-size: 20px;
+	padding: 4px;
+	text-align: center;
+	outline: 0;
 }
