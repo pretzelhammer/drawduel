@@ -13,18 +13,18 @@ export default function IndexApp() {
 			<h1>draw duel 🎨⚔️</h1>
 			<h2>home page</h2>
 			<div className="button-group">
-				<button className="button" href={gameLink}>
+				<a className="button" href={gameLink}>
 					new game
-				</button>
+				</a>
 				<div className="join-game">
 					<LineInput
 						placeholder="enter 4-letter code"
 						value={code}
 						onChange={(event) => setCode((event.target as HTMLInputElement).value)}
 					/>
-					<button className="button" href={`/game/#${code}`}>
+					<a className="button" href={`/game/#${code}`}>
 						join game
-					</button>
+					</a>
 				</div>
 			</div>
 		</>
