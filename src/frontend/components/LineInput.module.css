@@ -1,5 +1,5 @@
 .line {
-	background-image: url('/public/assets/line.png');
+	background-image: url('/assets/line.png');
 	background-size: cover;
 	opacity: 0.5;
 	width: 256px;
