@@ -237,36 +237,36 @@ I trust you to use your discretion on a case-by-case basis 😊
 
 The production server is a Ubuntu VPS. The drawduel server is run as a systemd service. The systemd service config file for drawduel is in the `production` directory of this project, among other production-only files. Handy commands for managing the drawduel service on production:
 
-```console
+```bash
 # start drawduel
-$ systemctl start drawduel
+systemctl start drawduel
 
 # stop drawduel
-$ systemctl stop drawduel
+systemctl stop drawduel
 
 # tells systemd to reload config files
 # use to run before restart if they
 # may have changed
-$ systemctl daemon-reload
+systemctl daemon-reload
 
 # restart drawduel
-$ systemctl restart drawduel
+systemctl restart drawduel
 
 # see status of drawduel
-$ systemctl status drawduel
+systemctl status drawduel
 
 # enable drawduel on startup
-$ systemctl enable drawduel
+systemctl enable drawduel
 
 # disable drawduel on startup
-$ systemctl disable drawduel
+systemctl disable drawduel
 
 # see all drawduel logs (even across restarts)
-$ journalctl -u drawduel
+journalctl -u drawduel
 
 # see real-time drawduel logs (similar to tail -f)
-$ journalctl -u drawduel -f
+journalctl -u drawduel -f
 
 # see 50 most recent drawduel logs
-$ journalctl -u drawduel -n 50
+journalctl -u drawduel -n 50
 ```
