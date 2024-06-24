@@ -39,7 +39,15 @@ export interface IncPlayerScore {
 	};
 }
 
-export type GameEvent = JoinEvent | LeftEvent | IncPlayerScore;
+export interface ChangePlayerName {
+	type: 'change-player-name';
+	data: {
+		id: PlayerId;
+		name: string;
+	};
+}
+
+export type GameEvent = JoinEvent | LeftEvent | IncPlayerScore | ChangePlayerName;
 
 export function initGameState(gameId: GameId): GameState {
 	return {
@@ -59,6 +67,9 @@ export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean 
 	} else if (gameEvent.type === 'inc-player-score') {
 		// can only increase the score of players who exist
 		return !!gameState.players[gameEvent.data.id];
+	} else if (gameEvent.type === 'change-player-name') {
+		// can only change name of players who exist
+		return !!gameState.players[gameEvent.data.id];
 	}
 	return true;
 }
@@ -73,6 +84,8 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 		delete gameState.players[gameEvent.data];
 	} else if (gameEvent.type === 'inc-player-score') {
 		gameState.players[gameEvent.data.id].score += gameEvent.data.score;
+	} else if (gameEvent.type === 'change-player-name') {
+		gameState.players[gameEvent.data.id].name = gameEvent.data.name;
 	}
 	return gameState;
 }

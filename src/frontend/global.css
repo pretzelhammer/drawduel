@@ -28,6 +28,16 @@ body {
 h1 {
 	font-size: 3.2em;
 	line-height: 1.1;
+	margin: 0.5em 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	margin: 0.5em 0;
 }
 
 .button,
@@ -47,8 +57,8 @@ button {
 	height: fit-content;
 	width: fit-content;
 }
-.button:active,
-button:active {
+.button:active:not(:disabled),
+button:active:not(:disabled) {
 	box-shadow: -3px 3px #2689ac;
 	transform: translate(-3px, 3px);
 }
@@ -61,9 +71,15 @@ button:focus-visible {
 	background-color: #fac7ff;
 	box-shadow: -6px 6px #ad55b6;
 }
-.button:active.button--purple,
-button:active.button--purple {
+.button:active.button--purple:not(:disabled),
+button:active.button--purple:not(:disabled) {
 	box-shadow: -3px 3px #ad55b6;
+}
+
+button:disabled,
+.button:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
 }
 
 input {
