@@ -82,6 +82,10 @@ function hasPermission(playerId: PlayerId, gameId: GameId, gameEvent: GameEvent)
 	} else if (gameEvent.type === 'change-player-name') {
 		// players can only change their own names
 		return playerId === gameEvent.data.id;
+	} else if (gameEvent.type === 'change-game-phase') {
+		// players can never change the game phase,
+		// only the server can issue this game event
+		return false;
 	}
 	return true;
 }

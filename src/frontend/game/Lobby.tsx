@@ -4,6 +4,7 @@ import { IncreaseMyScore } from 'src/frontend/game/components/IncreaseMyScore.ts
 import { ChangeName } from 'src/frontend/game/components/ChangeName.tsx';
 import { useClientContext } from 'src/frontend/game/ClientContextProvider.tsx';
 import { Route } from 'src/frontend/game/clientContext.ts';
+import { PrintClientContext } from 'src/frontend/game/components/PrintClientContext.tsx';
 
 export const Lobby: FunctionalComponent = () => {
 	const [clientContext, _, setClientContext] = useClientContext();
@@ -20,7 +21,10 @@ export const Lobby: FunctionalComponent = () => {
 			<PlayerList />
 			<IncreaseMyScore />
 			<ChangeName />
-			<button onClick={goToRound}>start round</button>
+			<button style="margin-bottom: 32px;" onClick={goToRound}>
+				start round
+			</button>
+			<PrintClientContext />
 		</>
 	);
 };

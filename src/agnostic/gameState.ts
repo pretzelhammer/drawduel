@@ -2,6 +2,7 @@ import { Maybe } from 'src/agnostic/types';
 
 export type PlayerId = string;
 export type GameId = string;
+export type GamePhase = 'pre-game' | 'rounds' | 'post-game';
 
 /**
  * the state of the game, synced
@@ -9,6 +10,7 @@ export type GameId = string;
  */
 export interface GameState {
 	id: GameId;
+	phase: GamePhase;
 	players: GamePlayers;
 }
 
@@ -64,14 +66,23 @@ export interface ChangePlayerNameEvent {
 }
 
 /**
+ * changes phase of the game
+ */
+export interface ChangeGamePhaseEvent {
+	type: 'change-game-phase';
+	data: GamePhase;
+}
+
+/**
  * union type representing all possible types
  * of game events
  */
-export type GameEvent = JoinEvent | LeftEvent | IncPlayerScoreEvent | ChangePlayerNameEvent;
+export type GameEvent = JoinEvent | LeftEvent | IncPlayerScoreEvent | ChangePlayerNameEvent | ChangeGamePhaseEvent;
 
 export function initGameState(gameId: GameId): GameState {
 	return {
 		id: gameId,
+		phase: 'pre-game',
 		players: {},
 	};
 }
@@ -98,6 +109,8 @@ export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean 
 		}
 		// and only if it isn't their name already
 		return player.name !== gameEvent.data.name;
+	} else if (gameEvent.type === 'change-game-phase') {
+		return gameState.phase !== gameEvent.data;
 	}
 	return true;
 }
@@ -118,6 +131,8 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 		gameState.players[gameEvent.data.id].score += gameEvent.data.score;
 	} else if (gameEvent.type === 'change-player-name') {
 		gameState.players[gameEvent.data.id].name = gameEvent.data.name;
+	} else if (gameEvent.type === 'change-game-phase') {
+		gameState.phase = gameEvent.data;
 	}
 	return gameState;
 }

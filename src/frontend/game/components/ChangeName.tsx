@@ -56,7 +56,7 @@ export const ChangeName: FunctionalComponent = () => {
 				value={inputValue}
 				onInput={(event) => setInputValue((event.target as HTMLInputElement).value)}
 			/>
-			<div style="margin-top: 16px;">
+			<div style="margin: 16px 0 32px 0;">
 				<button class="compact" style="margin-right: 16px;" disabled={!canChangeName} onClick={changeName}>
 					change name & +score
 				</button>
