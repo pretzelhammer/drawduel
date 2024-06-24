@@ -7,7 +7,7 @@
 
 .button__join-game {
 	margin-top: 1rem;
-	background-color:  #fac7ff;
+	background-color: #fac7ff;
 }
 
 .button-group {
@@ -20,4 +20,3 @@
 .button__new-game {
 	align-self: end;
 }
-
