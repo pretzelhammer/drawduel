@@ -1,10 +1,9 @@
 import { type FunctionalComponent } from 'preact';
 import { useClientContext } from 'src/frontend/game/ClientContextProvider.tsx';
-import { IncreaseMyScore } from 'src/frontend/game/components/IncreaseMyScore';
 import { GamePlayer } from 'src/agnostic/gameState.ts';
 
 export const PlayerList: FunctionalComponent = () => {
-	const [clientContext, dispatchGameEvent, setClientState] = useClientContext();
+	const [clientContext] = useClientContext();
 	const players = Object.values(clientContext.gameState.players);
 	const myId = clientContext.clientState.player.id;
 	function playerName(player: GamePlayer) {
@@ -19,7 +18,7 @@ export const PlayerList: FunctionalComponent = () => {
 			{/*
 			<div style="margin-bottom: 16px;">{JSON.stringify(clientContext)}</div>
 			*/}
-			<table style="margin-bottom: 16px;">
+			<table style="margin-bottom: 32px;">
 				<thead>
 					<tr>
 						<th>id</th>
@@ -37,7 +36,6 @@ export const PlayerList: FunctionalComponent = () => {
 					))}
 				</tbody>
 			</table>
-			<IncreaseMyScore />
 		</>
 	);
 };

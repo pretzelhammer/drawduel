@@ -94,9 +94,14 @@ const ClientContextProvider: FunctionalComponent = ({ children }) => {
 		[clientContext],
 	);
 
+	// we know we've synced with the server when we can find our
+	// client player id in the game state
+	const myId = clientContext.clientState.player.id;
+	const syncedWithServer = !!clientContext.gameState.players[myId];
+
 	return (
 		<ClientContextKey.Provider value={[clientContext, dispatchGameEvent, setClientState]}>
-			{children}
+			{syncedWithServer ? children : 'loading...'}
 		</ClientContextKey.Provider>
 	);
 };

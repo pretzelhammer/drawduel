@@ -55,6 +55,10 @@ function correctPass(gameId: GameId, playerId: PlayerId, pass: string): boolean 
 	return true;
 }
 
+/**
+ * checks if the player that produced this event had the permission
+ * to do so
+ */
 function hasPermission(playerId: PlayerId, gameId: GameId, gameEvent: GameEvent): boolean {
 	const gameState = serverContext[gameId].gameState;
 	const player: Maybe<GamePlayer> = gameState.players[playerId];
@@ -75,15 +79,23 @@ function hasPermission(playerId: PlayerId, gameId: GameId, gameEvent: GameEvent)
 		// to power to increase or decrease scores is the server
 		// so we may change this later
 		return playerId === gameEvent.data.id;
+	} else if (gameEvent.type === 'change-player-name') {
+		// players can only change their own names
+		return playerId === gameEvent.data.id;
 	}
-
 	return true;
 }
 
+/**
+ * checks if given game event can advance the specific game on the server
+ */
 function canAdvanceServerGame(gameId: GameId, gameEvent: GameEvent): boolean {
 	return canAdvance(serverContext[gameId].gameState, gameEvent);
 }
 
+/**
+ * advances game state on the server given the game event
+ */
 function advanceServerGame(gameId: GameId, gameEvent: GameEvent) {
 	const currentGameState = serverContext[gameId].gameState;
 	const nextGameState = advance(currentGameState, gameEvent);
@@ -164,25 +176,18 @@ export function setupWsServer(httpServer: HttpServer) {
 		log(`player ${playerId} connected to game ${gameId}`);
 
 		const serverGameContext: ServerGameContext = serverContext[gameId];
-		const gameState: GameState = serverGameContext.gameState;
-		const serverState: ServerState = serverGameContext.serverState;
 
 		// add player to our server state
-		serverState.players[playerId] = {
+		serverGameContext.serverState.players[playerId] = {
 			id: playerId,
 			pass,
 			connected: true,
 		};
 
-		// sync current state of the game with client
-		emit({ type: 'set-game-state', data: gameState });
-
-		// join game room
-		socket.join(gameId);
-
 		// is this a new player?
-		if (!gameState.players[playerId]) {
-			// create and broadcast join event to all players in game
+		if (!serverGameContext.gameState.players[playerId]) {
+			// create and broadcast join event to all current players in game
+			// except for the just connected player
 			const joinEvent: JoinEvent = { type: 'join', data: { id: playerId, name } };
 			if (canAdvanceServerGame(gameId, joinEvent)) {
 				advanceServerGame(gameId, joinEvent);
@@ -190,11 +195,17 @@ export function setupWsServer(httpServer: HttpServer) {
 			}
 		}
 
+		// sync current state of the game with just connected player
+		emit({ type: 'set-game-state', data: serverGameContext.gameState });
+
+		// join just connected player to game room
+		socket.join(gameId);
+
 		socket.on('disconnect', (reason: string) => {
 			log(`player ${playerId} disconnected from game ${gameId} because: ${reason}`);
-			serverState.players[playerId].connected = false;
+			serverGameContext.serverState.players[playerId].connected = false;
 			// delete game if we have no more active connections
-			const deleteGame = !Object.values(serverState.players).some((player) => player.connected);
+			const deleteGame = !Object.values(serverGameContext.serverState.players).some((player) => player.connected);
 			if (deleteGame) {
 				log(`deleting game ${gameId} because last player left`);
 				delete serverContext[gameId];
