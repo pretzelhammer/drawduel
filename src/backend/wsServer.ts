@@ -166,10 +166,9 @@ export function setupWsServer(httpServer: HttpServer) {
 		log(`player ${playerId} connected to game ${gameId}`);
 
 		const serverGameContext: ServerGameContext = serverContext[gameId];
-		const serverState: ServerState = serverGameContext.serverState;
 
 		// add player to our server state
-		serverState.players[playerId] = {
+		serverGameContext.serverState.players[playerId] = {
 			id: playerId,
 			pass,
 			connected: true,
@@ -194,9 +193,9 @@ export function setupWsServer(httpServer: HttpServer) {
 
 		socket.on('disconnect', (reason: string) => {
 			log(`player ${playerId} disconnected from game ${gameId} because: ${reason}`);
-			serverState.players[playerId].connected = false;
+			serverGameContext.serverState.players[playerId].connected = false;
 			// delete game if we have no more active connections
-			const deleteGame = !Object.values(serverState.players).some((player) => player.connected);
+			const deleteGame = !Object.values(serverGameContext.serverState.players).some((player) => player.connected);
 			if (deleteGame) {
 				log(`deleting game ${gameId} because last player left`);
 				delete serverContext[gameId];
