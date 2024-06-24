@@ -76,6 +76,22 @@ We proxy through Cloudflare, which gives us SSL/TLS, http -> https redirects, an
 
 [TypeScript](https://www.typescriptlang.org/). Contains all code that can or needs to run on both the frontend and backend like: game logic, general utilities, etc.
 
+### state organization
+
+State logic is spread across three key files: `gameState.ts`, `clientContext.ts`, and `serverContext.ts`. If you'd like to see a reference PR that touches all three of these files to implement a new feature in the game (changing player name) you can [see that here](https://github.com/pretzelhammer/drawduel/pull/3).
+
+#### src/agnostic/gameState.ts
+
+This file contains definitions of the game state and of game events that can advance the game state.
+
+#### src/frontend/clientContext.ts
+
+This file contains the definition of the client context. The main two parts of the client context are the game state and the client state. The game state represents the state of the game, and should stay in sync with the server at all times. The client state represents state specific to this client, and that the server doesn't need to know about or shouldn't know about.
+
+#### src/backend/serverContext.ts
+
+This file contains the definition of the the server context. Inside the server context is a map of game ids to server game contexts, since the server can handle multiple concurrent games. Inside each server game context is the game state and server state. The game state represents the state of the game, and should be synced with all clients at all times. The server state represents state specific to this game for all clients, but is information that the clients don't need to know about or shouldn't know about.
+
 ### code style conventions
 
 All imports should use an absolute url:
