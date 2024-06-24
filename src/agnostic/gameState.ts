@@ -2,6 +2,7 @@ import { Maybe } from 'src/agnostic/types';
 
 export type PlayerId = string;
 export type GameId = string;
+export type TeamId = string;
 export type GamePhase = 'pre-game' | 'rounds' | 'post-game';
 
 /**
@@ -11,8 +12,28 @@ export type GamePhase = 'pre-game' | 'rounds' | 'post-game';
 export interface GameState {
 	id: GameId;
 	phase: GamePhase;
+	teams: GameTeams;
 	players: GamePlayers;
 }
+
+export interface GameTeams {
+	[key: TeamId]: GameTeam;
+}
+
+export interface GameTeam {
+	score: number;
+	players: TeamPlayers;
+}
+
+export interface TeamPlayers {
+	[key: PlayerId]: TeamPlayer;
+}
+
+export interface TeamPlayer {
+	role: TeamPlayerRole;
+}
+
+export type TeamPlayerRole = 'drawer' | 'guesser' | 'spectator';
 
 export interface GamePlayers {
 	[key: PlayerId]: GamePlayer;
@@ -22,6 +43,7 @@ export interface GamePlayer {
 	id: PlayerId;
 	name: string;
 	score: number;
+	team: TeamId;
 }
 
 /**
@@ -32,6 +54,7 @@ export interface JoinEvent {
 	data: {
 		id: PlayerId;
 		name: string;
+		team: TeamId;
 	};
 }
 
@@ -84,6 +107,7 @@ export function initGameState(gameId: GameId): GameState {
 		id: gameId,
 		phase: 'pre-game',
 		players: {},
+		teams: {},
 	};
 }
 
@@ -95,9 +119,11 @@ export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean 
 		// player can only join if they aren't already in the game
 		return !gameState.players[gameEvent.data.id];
 	} else if (gameEvent.type === 'left') {
-		// player can only leave if they exist and have zero score
+		// players data can only be deleted from the game if
+		// they exist, have zero score, and we haven't started
+		// the game yet
 		const player: Maybe<GamePlayer> = gameState.players[gameEvent.data];
-		return player && player.score === 0;
+		return player && player.score === 0 && gameState.phase === 'pre-game';
 	} else if (gameEvent.type === 'inc-player-score') {
 		// can only increase the score of players who exist
 		return !!gameState.players[gameEvent.data.id];
@@ -125,10 +151,29 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 			...gameEvent.data,
 			score: 0,
 		};
+		const team: GameTeam = gameState.teams[gameEvent.data.team] || {
+			players: {},
+			score: 0,
+		};
+		team.players[gameEvent.data.id] = {
+			role: 'guesser',
+		};
+		gameState.teams[gameEvent.data.team] = team;
 	} else if (gameEvent.type === 'left') {
+		let player: GamePlayer = gameState.players[gameEvent.data];
+		// delete player from game
 		delete gameState.players[gameEvent.data];
+		// delete player from team
+		delete gameState.teams[player.team].players[player.id];
+		// if team is now empty also delete team
+		if (Object.keys(gameState.teams[player.team].players).length === 0) {
+			delete gameState.teams[player.team];
+		}
 	} else if (gameEvent.type === 'inc-player-score') {
-		gameState.players[gameEvent.data.id].score += gameEvent.data.score;
+		const player: GamePlayer = gameState.players[gameEvent.data.id];
+		player.score += gameEvent.data.score;
+		// also increase score of player's team
+		gameState.teams[player.team].score += gameEvent.data.score;
 	} else if (gameEvent.type === 'change-player-name') {
 		gameState.players[gameEvent.data.id].name = gameEvent.data.name;
 	} else if (gameEvent.type === 'change-game-phase') {

@@ -192,7 +192,7 @@ export function setupWsServer(httpServer: HttpServer) {
 		if (!serverGameContext.gameState.players[playerId]) {
 			// create and broadcast join event to all current players in game
 			// except for the just connected player
-			const joinEvent: JoinEvent = { type: 'join', data: { id: playerId, name } };
+			const joinEvent: JoinEvent = { type: 'join', data: { id: playerId, name, team: '1' } };
 			if (canAdvanceServerGame(gameId, joinEvent)) {
 				advanceServerGame(gameId, joinEvent);
 				emitAll(joinEvent);
