@@ -15,7 +15,7 @@ export const IncreaseMyScore: FunctionalComponent = () => {
 	};
 
 	return (
-		<button style="margin-bottom: 32px;" onClick={onClick}>
+		<button class="compact" style="margin-bottom: 32px;" onClick={onClick}>
 			increase my score by 100
 		</button>
 	);

@@ -19,6 +19,12 @@
 	-moz-osx-font-smoothing: grayscale;
 }
 
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
 body {
 	margin: 0;
 	min-width: 320px;
@@ -42,9 +48,12 @@ h6 {
 
 .button,
 button {
+	display: inline-flex;
+	align-items: center;
+	height: 44px;
 	color: inherit;
 	border-radius: 8px;
-	padding: 10px 48px;
+	padding: 0 48px;
 	font-size: 1em;
 	font-weight: 500;
 	font-family: inherit;
@@ -54,9 +63,14 @@ button {
 	box-shadow: -6px 6px #2689ac;
 	border: none;
 	text-decoration: none;
-	height: fit-content;
 	width: fit-content;
 }
+.button.compact,
+button.compact {
+	padding: 0 16px;
+	height: 36px;
+}
+
 .button:active:not(:disabled),
 button:active:not(:disabled) {
 	box-shadow: -3px 3px #2689ac;
