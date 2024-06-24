@@ -10,9 +10,11 @@ import {
 	dummyClientContext,
 	hasSideEffect,
 	performSideEffect,
+	canOptimisticallyRender,
 } from 'src/frontend/game/clientContext.ts';
 import { connect } from 'src/frontend/game/utils/sockets.ts';
 import { Maybe } from 'src/agnostic/types.ts';
+import { update } from 'lodash';
 
 type UseClientContext = [
 	ClientContext,
@@ -28,6 +30,23 @@ const ClientContextKey = createContext<UseClientContext>([
 
 function useClientContext(): UseClientContext {
 	return useContext(ClientContextKey);
+}
+
+function updateClientContext(clientContext: ClientContext, gameEvent: GameEvent): ClientContext {
+	if (canAdvance(clientContext.gameState, gameEvent)) {
+		const nextGameState = advance(clientContext.gameState, gameEvent);
+		let nextClientState = clientContext.clientState;
+		if (hasSideEffect(clientContext, gameEvent)) {
+			nextClientState = performSideEffect(clientContext, gameEvent);
+		}
+		return {
+			...clientContext,
+			gameState: nextGameState,
+			clientState: nextClientState,
+		};
+	} else {
+		return clientContext;
+	}
 }
 
 const ClientContextProvider: FunctionalComponent = ({ children }) => {
@@ -59,48 +78,30 @@ const ClientContextProvider: FunctionalComponent = ({ children }) => {
 					break;
 				default:
 					// https://dmitripavlutin.com/react-hooks-stale-closures/
-					setClientContext((currentClientContext) => {
-						if (canAdvance(currentClientContext.gameState, event)) {
-							const nextGameState = advance(currentClientContext.gameState, event);
-							let nextClientState = currentClientContext.clientState;
-							if (hasSideEffect(currentClientContext, event)) {
-								nextClientState = performSideEffect(currentClientContext, event);
-							}
-							return {
-								...currentClientContext,
-								gameState: nextGameState,
-								clientState: nextClientState,
-							};
-						} else {
-							return currentClientContext;
-						}
-					});
+					setClientContext((currentClientContext) => updateClientContext(currentClientContext, event));
 			}
 		});
 	}, []);
 
-	const dispatchGameEvent = useCallback(
-		(gameEvent: GameEvent) => {
-			if (socket.current) {
-				console.log('dispatching game event', gameEvent);
-				socket.current.emit('event', gameEvent);
-			} else {
-				console.error('tried to dispatch game event on null socket', gameEvent);
-			}
-		},
-		[clientContext],
-	);
+	const dispatchGameEvent = (gameEvent: GameEvent) => {
+		if (canOptimisticallyRender(gameEvent)) {
+			setClientContext((currentClientContext) => updateClientContext(currentClientContext, gameEvent));
+		}
+		if (socket.current) {
+			console.log('dispatching game event', gameEvent);
+			socket.current.emit('event', gameEvent);
+		} else {
+			console.error('tried to dispatch game event on null socket', gameEvent);
+		}
+	};
 
-	const setClientState = useCallback(
-		(clientState: ClientState) => {
-			console.log('setting client state', clientState);
-			setClientContext((currentClientContext) => ({
-				...currentClientContext,
-				clientState,
-			}));
-		},
-		[clientContext],
-	);
+	const setClientState = (clientState: ClientState) => {
+		console.log('setting client state', clientState);
+		setClientContext((currentClientContext) => ({
+			...currentClientContext,
+			clientState,
+		}));
+	};
 
 	// we know we've synced with the server when we can find our
 	// client player id in the game state

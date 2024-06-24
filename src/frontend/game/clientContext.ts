@@ -102,6 +102,15 @@ export function performSideEffect(clientContext: ClientContext, gameEvent: GameE
 	return clientContext.clientState;
 }
 
+/**
+ * check if we can immediately advance our client game state
+ * using this game event without having to wait for the response
+ * from the server
+ */
+export function canOptimisticallyRender(gameEvent: GameEvent): boolean {
+	return gameEvent.type === 'change-player-name';
+}
+
 function fetchPersonas(): ClientPlayerPersonas {
 	const personasString = localStorage.getItem('personas');
 	let personas: ClientPlayerPersonas = {};

@@ -91,8 +91,13 @@ export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean 
 		// can only increase the score of players who exist
 		return !!gameState.players[gameEvent.data.id];
 	} else if (gameEvent.type === 'change-player-name') {
-		// can only change name of players who exist
-		return !!gameState.players[gameEvent.data.id];
+		// can only change name of player who exists
+		const player = gameState.players[gameEvent.data.id];
+		if (!player) {
+			return false;
+		}
+		// and only if it isn't their name already
+		return player.name !== gameEvent.data.name;
 	}
 	return true;
 }
