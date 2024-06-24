@@ -1,7 +1,7 @@
 import { createContext, type FunctionalComponent } from 'preact';
-import { useCallback, useContext, useState, useEffect, useRef } from 'preact/hooks';
+import { useContext, useState, useEffect, useRef } from 'preact/hooks';
 import { Socket } from 'socket.io-client';
-import { type ServerEvent } from 'src/agnostic/events.ts';
+import { ClientEvent, MaybeBatchGameEvent, type ServerEvent } from 'src/agnostic/events.ts';
 import { canAdvance, advance, type GameEvent } from 'src/agnostic/gameState.ts';
 import {
 	type ClientState,
@@ -14,17 +14,16 @@ import {
 } from 'src/frontend/game/clientContext.ts';
 import { connect } from 'src/frontend/game/utils/sockets.ts';
 import { Maybe } from 'src/agnostic/types.ts';
-import { update } from 'lodash';
 
 type UseClientContext = [
 	ClientContext,
-	(gameEvent: GameEvent) => void, // dispatch game events
+	(clientEvent: ClientEvent) => void, // dispatch client events
 	(clientState: ClientState) => void, // set client state
 ];
 
 const ClientContextKey = createContext<UseClientContext>([
 	dummyClientContext(),
-	(_gameEvent: GameEvent) => {},
+	(_clientEvent: ClientEvent) => {},
 	(_clientState: ClientState) => {},
 ]);
 
@@ -32,21 +31,22 @@ function useClientContext(): UseClientContext {
 	return useContext(ClientContextKey);
 }
 
-function updateClientContext(clientContext: ClientContext, gameEvent: GameEvent): ClientContext {
-	if (canAdvance(clientContext.gameState, gameEvent)) {
-		const nextGameState = advance(clientContext.gameState, gameEvent);
-		let nextClientState = clientContext.clientState;
-		if (hasSideEffect(clientContext, gameEvent)) {
-			nextClientState = performSideEffect(clientContext, gameEvent);
-		}
-		return {
-			...clientContext,
-			gameState: nextGameState,
-			clientState: nextClientState,
-		};
+function updateClientContext(clientContext: ClientContext, event: MaybeBatchGameEvent): ClientContext {
+	let gameEvents: GameEvent[] = [];
+	if (event.type === 'batch') {
+		gameEvents = event.data;
 	} else {
-		return clientContext;
+		gameEvents.push(event);
 	}
+	for (let gameEvent of gameEvents) {
+		if (canAdvance(clientContext.gameState, gameEvent)) {
+			clientContext.gameState = advance(clientContext.gameState, gameEvent);
+			if (hasSideEffect(clientContext, gameEvent)) {
+				clientContext.clientState = performSideEffect(clientContext, gameEvent);
+			}
+		}
+	}
+	return { ...clientContext };
 }
 
 const ClientContextProvider: FunctionalComponent = ({ children }) => {
@@ -77,21 +77,20 @@ const ClientContextProvider: FunctionalComponent = ({ children }) => {
 					}));
 					break;
 				default:
-					// https://dmitripavlutin.com/react-hooks-stale-closures/
 					setClientContext((currentClientContext) => updateClientContext(currentClientContext, event));
 			}
 		});
 	}, []);
 
-	const dispatchGameEvent = (gameEvent: GameEvent) => {
-		if (canOptimisticallyRender(gameEvent)) {
-			setClientContext((currentClientContext) => updateClientContext(currentClientContext, gameEvent));
+	const dispatchGameEvent = (event: ClientEvent) => {
+		if (canOptimisticallyRender(event)) {
+			setClientContext((currentClientContext) => updateClientContext(currentClientContext, event));
 		}
 		if (socket.current) {
-			console.log('dispatching game event', gameEvent);
-			socket.current.emit('event', gameEvent);
+			console.log('dispatching game event', event);
+			socket.current.emit('event', event);
 		} else {
-			console.error('tried to dispatch game event on null socket', gameEvent);
+			console.error('tried to dispatch game event on null socket', event);
 		}
 	};
 

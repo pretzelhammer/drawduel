@@ -20,7 +20,7 @@ import {
 	type GameId,
 	type PlayerId,
 } from 'src/agnostic/gameState.ts';
-import { type ServerEvent, type ClientError } from 'src/agnostic/events.ts';
+import { type ServerEvent, type ClientError, ClientEvent, BatchEvent } from 'src/agnostic/events.ts';
 import { validGameId, validName, validPass, validPlayerId } from 'src/agnostic/validation';
 import { Maybe } from 'src/agnostic/types';
 
@@ -162,7 +162,7 @@ export function setupWsServer(httpServer: HttpServer) {
 			return;
 		}
 
-		function emitAll(event: GameEvent) {
+		function emitAll(event: ServerEvent) {
 			wsServer.to(gameId!).emit('event', event);
 		}
 
@@ -222,21 +222,39 @@ export function setupWsServer(httpServer: HttpServer) {
 		// broadcasts game events from player to all
 		// players in game, including back to player
 		// who sent us this event
-		socket.on('event', (gameEvent: GameEvent) => {
-			// check that the player who produced this event has the permission
-			// to produce it, and check that it will advance the game state
-			if (hasPermission(playerId, gameId, gameEvent) && canAdvanceServerGame(gameId, gameEvent)) {
-				advanceServerGame(gameId, gameEvent);
-				emitAll(gameEvent);
-				// this particular event has a small server side effect, hopefully
-				// this is the only one that needs to do this, otherwise we need
-				// to refactor the code below to make it more obvious that server
-				// side effects can happen as a result of game events
-				if (gameEvent.type === 'change-player-name' && gameEvent.data.id === playerId) {
-					name = gameEvent.data.name;
-				}
+		socket.on('event', (clientEvent: ClientEvent) => {
+			let gameEvents: GameEvent[] = [];
+			if (clientEvent.type === 'batch') {
+				gameEvents = clientEvent.data;
 			} else {
-				log(`player ${playerId} in game ${gameId} sent weird event`, gameEvent);
+				gameEvents.push(clientEvent);
+			}
+			let gameEventsToEmit = [];
+			for (let gameEvent of gameEvents) {
+				// check that the player who produced this event has the permission
+				// to produce it, and check that it will advance the game state
+				if (hasPermission(playerId, gameId, gameEvent) && canAdvanceServerGame(gameId, gameEvent)) {
+					advanceServerGame(gameId, gameEvent);
+					gameEventsToEmit.push(gameEvent);
+					// this particular event has a small server side effect, hopefully
+					// this is the only one that needs to do this, otherwise we need
+					// to refactor the code below to make it more obvious that server
+					// side effects can happen as a result of game events
+					if (gameEvent.type === 'change-player-name' && gameEvent.data.id === playerId) {
+						name = gameEvent.data.name;
+					}
+				} else {
+					log(`player ${playerId} in game ${gameId} sent weird event`, gameEvent);
+				}
+			}
+			if (gameEventsToEmit.length === 1) {
+				emitAll(gameEventsToEmit[0]);
+			} else if (gameEventsToEmit.length > 1) {
+				let batchEvent: BatchEvent = {
+					type: 'batch',
+					data: gameEventsToEmit,
+				};
+				emitAll(batchEvent);
 			}
 		});
 

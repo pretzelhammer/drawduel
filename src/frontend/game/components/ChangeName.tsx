@@ -16,12 +16,31 @@ export const ChangeName: FunctionalComponent = () => {
 	const canChangeName = validName(inputValue) && me.name !== inputValue;
 
 	const changeName = () => {
+		// dispatchGameEvent({
+		// 	type: 'change-player-name',
+		// 	data: {
+		// 		id: myId,
+		// 		name: inputValue,
+		// 	},
+		// });
 		dispatchGameEvent({
-			type: 'change-player-name',
-			data: {
-				id: myId,
-				name: inputValue,
-			},
+			type: 'batch',
+			data: [
+				{
+					type: 'change-player-name',
+					data: {
+						id: myId,
+						name: inputValue,
+					},
+				},
+				{
+					type: 'inc-player-score',
+					data: {
+						id: myId,
+						score: 100,
+					},
+				},
+			],
 		});
 		setInputValue('');
 	};
@@ -39,7 +58,7 @@ export const ChangeName: FunctionalComponent = () => {
 			/>
 			<div style="margin-top: 16px;">
 				<button class="compact" style="margin-right: 16px;" disabled={!canChangeName} onClick={changeName}>
-					change name
+					change name & +score
 				</button>
 				<button class="compact" onClick={randomizeName}>
 					🎲

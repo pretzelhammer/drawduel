@@ -28,4 +28,11 @@ export interface SetGameStateEvent {
 	data: GameState;
 }
 
-export type ServerEvent = GameEvent | SetGameStateEvent | ClientErrorEvent | ServerErrorEvent;
+export interface BatchEvent {
+	type: 'batch';
+	data: GameEvent[];
+}
+
+export type ServerEvent = GameEvent | BatchEvent | SetGameStateEvent | ClientErrorEvent | ServerErrorEvent;
+export type ClientEvent = GameEvent | BatchEvent;
+export type MaybeBatchGameEvent = GameEvent | BatchEvent;

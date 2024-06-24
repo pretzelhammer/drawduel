@@ -3,6 +3,7 @@ import { randomLongId, randomPlayerName } from 'src/agnostic/random.ts';
 import { parseGameId, parsePlayerPersona } from 'src/frontend/game/utils/parsing.ts';
 import isObject from 'lodash-es/isObject';
 import isString from 'lodash-es/isString';
+import { ClientEvent } from 'src/agnostic/events';
 
 export enum Route {
 	Lobby = 'ROUTE_LOBBY',
@@ -115,8 +116,8 @@ export function performSideEffect(clientContext: ClientContext, gameEvent: GameE
  * using this game event without having to wait for the response
  * from the server
  */
-export function canOptimisticallyRender(gameEvent: GameEvent): boolean {
-	return gameEvent.type === 'change-player-name';
+export function canOptimisticallyRender(event: ClientEvent): boolean {
+	return event.type === 'change-player-name';
 }
 
 function fetchPersonas(): ClientPlayerPersonas {
