@@ -44,7 +44,7 @@ export interface LeftEvent {
 /**
  * increase player's score
  */
-export interface IncPlayerScore {
+export interface IncPlayerScoreEvent {
 	type: 'inc-player-score';
 	data: {
 		id: PlayerId;
@@ -55,7 +55,7 @@ export interface IncPlayerScore {
 /**
  * change player's name
  */
-export interface ChangePlayerName {
+export interface ChangePlayerNameEvent {
 	type: 'change-player-name';
 	data: {
 		id: PlayerId;
@@ -67,7 +67,7 @@ export interface ChangePlayerName {
  * union type representing all possible types
  * of game events
  */
-export type GameEvent = JoinEvent | LeftEvent | IncPlayerScore | ChangePlayerName;
+export type GameEvent = JoinEvent | LeftEvent | IncPlayerScoreEvent | ChangePlayerNameEvent;
 
 export function initGameState(gameId: GameId): GameState {
 	return {
