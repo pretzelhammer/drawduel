@@ -1,4 +1,5 @@
 .canvas {
 	background: white;
-	border: solid 2px black;
+	border: solid 2px gray;
+	border-radius: 0.25rem;
 }
