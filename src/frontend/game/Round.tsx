@@ -17,7 +17,7 @@ export const Round: FunctionalComponent<RoundProps> = ({ teamName, teamPreviews 
 	// TODO: replace time with something from server
 	const time = '1:00';
 	return (
-		<div>
+		<>
 			<div>
 				<div>
 					<h2>{time}</h2>
@@ -30,6 +30,6 @@ export const Round: FunctionalComponent<RoundProps> = ({ teamName, teamPreviews 
 					<div>TODO</div>
 				))}
 			</div>
-		</div>
+		</>
 	);
 };
