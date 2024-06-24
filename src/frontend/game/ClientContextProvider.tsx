@@ -8,6 +8,8 @@ import {
 	initClientContext,
 	type ClientContext,
 	dummyClientContext,
+	hasSideEffect,
+	performSideEffect,
 } from 'src/frontend/game/clientContext.ts';
 import { connect } from 'src/frontend/game/utils/sockets.ts';
 import { Maybe } from 'src/agnostic/types.ts';
@@ -37,7 +39,7 @@ const ClientContextProvider: FunctionalComponent = ({ children }) => {
 			clientContext.gameState.id,
 			clientContext.clientState.player.id,
 			clientContext.clientState.player.pass,
-			clientContext.clientState.player.placeholderName,
+			clientContext.clientState.player.name,
 		);
 		socket.current.on('event', (event: ServerEvent) => {
 			console.log('GOT EVENT FROM SERVER:', event);
@@ -59,9 +61,15 @@ const ClientContextProvider: FunctionalComponent = ({ children }) => {
 					// https://dmitripavlutin.com/react-hooks-stale-closures/
 					setClientContext((currentClientContext) => {
 						if (canAdvance(currentClientContext.gameState, event)) {
+							const nextGameState = advance(currentClientContext.gameState, event);
+							let nextClientState = currentClientContext.clientState;
+							if (hasSideEffect(currentClientContext, event)) {
+								nextClientState = performSideEffect(currentClientContext, event);
+							}
 							return {
 								...currentClientContext,
-								gameState: advance(currentClientContext.gameState, event),
+								gameState: nextGameState,
+								clientState: nextClientState,
 							};
 						} else {
 							return currentClientContext;

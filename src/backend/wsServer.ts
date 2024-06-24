@@ -228,6 +228,13 @@ export function setupWsServer(httpServer: HttpServer) {
 			if (hasPermission(playerId, gameId, gameEvent) && canAdvanceServerGame(gameId, gameEvent)) {
 				advanceServerGame(gameId, gameEvent);
 				emitAll(gameEvent);
+				// this particular event has a small server side effect, hopefully
+				// this is the only one that needs to do this, otherwise we need
+				// to refactor the code below to make it more obvious that server
+				// side effects can happen as a result of game events
+				if (gameEvent.type === 'change-player-name' && gameEvent.data.id === playerId) {
+					name = gameEvent.data.name;
+				}
 			} else {
 				log(`player ${playerId} in game ${gameId} sent weird event`, gameEvent);
 			}

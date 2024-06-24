@@ -46,7 +46,7 @@ The index entry point is the main home page of the site. Its template is at `/in
 
 The game entry point is the page of the site where actual draw duel games are played. Its template is at `/game/index.html` and it loads `/src/frontend/game/game.tsx` which loads `/src/frontend/game/GameApp.tsx` which renders the game page. If you want to make changes to this page you'll likely put them in `GameApp.tsx`. See this page on prod here https://drawduel.com/game/.
 
-Global CSS should be put in `/src/frontend/global.css` which is imported by both entry points. To scope CSS to a specific component, put it in a `*.module.css` file and import it within that component, see `/src/frontend/components/PingPong.tsx` and `/src/frontend/PingPong.module.css` as an example.
+Global CSS should be put in `/src/frontend/global.css` which is imported by both entry points. To scope CSS to a specific component, put it in a `*.module.css` file and import it within that component, see `lineInput.tsx` and `LineInput.module.css` as an example.
 
 _"There's no client-side routing library, should I add one?"_
 
@@ -206,6 +206,26 @@ const MyComponent: FunctionalComponent = (props) => {
 ```
 
 We should probably should add [eslint](https://eslint.org/) to this project to catch those cases when we have time. Don't want to go down an eslint config rabbit hole right now.
+
+### dev tips
+
+#### tooling
+
+Since this is largely a TypeScript and Preact project it'd good to use an IDE with strong TypeScript support like [VSCode](https://code.visualstudio.com/) and install the [Preact DevTools](https://preactjs.github.io/preact-devtools/) extension for your browser.
+
+#### impersonating multiple players at once
+
+Since this is a multiplayer game we'll have impersonate many players at once to test stuff in local dev. Convenient support for this is already implemented in this project and it's called "personas". To create or use a player "persona" just append a dash and some string after the game id in the game url. For example, if this is the game url:
+
+http://localhost:8888/game/#test
+
+You can create three "personas" to play the game with these urls, as an example:
+
+http://localhost:8888/game/#test-alex
+http://localhost:8888/game/#test-bob
+http://localhost:8888/game/#test-chris
+
+The "personas" are managed entirely by the client and the server isn't aware of them. They also persist between games, although the only player-facing data within a "persona" is the player name.
 
 ### general Qs & As
 
