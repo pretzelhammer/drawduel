@@ -221,9 +221,9 @@ http://localhost:8888/game/#test
 
 You can create three "personas" to play the game with these urls, as an example:
 
-http://localhost:8888/game/#test-alex
-http://localhost:8888/game/#test-bob
-http://localhost:8888/game/#test-chris
+1.  http://localhost:8888/game/#test-alex
+1.  http://localhost:8888/game/#test-bob
+1.  http://localhost:8888/game/#test-chris
 
 The "personas" are managed entirely by the client and the server isn't aware of them. They also persist between games, although the only player-facing data within a "persona" is the player name.
 
@@ -237,7 +237,7 @@ I trust you to use your discretion on a case-by-case basis 😊
 
 The production server is a Ubuntu VPS. The drawduel server is run as a systemd service. The systemd service config file for drawduel is in the `production` directory of this project, among other production-only files. Handy commands for managing the drawduel service on production:
 
-```bash
+```console
 # start drawduel
 $ systemctl start drawduel
 
