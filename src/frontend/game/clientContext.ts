@@ -4,6 +4,11 @@ import { parseGameId, parsePlayerPersona } from 'src/frontend/game/utils/parsing
 import isObject from 'lodash-es/isObject';
 import isString from 'lodash-es/isString';
 
+export enum Route {
+	Lobby = 'ROUTE_LOBBY',
+	Round = 'ROUTE_ROUND',
+}
+
 export interface ClientContext {
 	// state of the game, should stay in sync
 	// with what's on the server
@@ -14,6 +19,7 @@ export interface ClientContext {
 
 export interface ClientState {
 	player: ClientPlayerState;
+	route: Route;
 }
 
 export interface ClientPlayerState {
@@ -36,6 +42,7 @@ export function dummyClientContext(): ClientContext {
 export function dummyClientState(): ClientState {
 	return {
 		player: dummyPlayerState(),
+		route: Route.Lobby,
 	};
 }
 
@@ -58,6 +65,7 @@ export function initClientContext(): ClientContext {
 function initClientState(): ClientState {
 	return {
 		player: initPlayerState(),
+		route: Route.Lobby,
 	};
 }
 
