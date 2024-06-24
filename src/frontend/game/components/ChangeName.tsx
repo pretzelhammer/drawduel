@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import { type FunctionalComponent } from 'preact';
 import { LineInput } from 'src/frontend/components/LineInput.tsx';
 import { useClientContext } from 'src/frontend/game/ClientContextProvider.tsx';
-import { validName } from 'src/agnostic/validation';
+import { validName } from 'src/agnostic/validation.ts';
 
 export const ChangeName: FunctionalComponent = () => {
 	let [clientContext, dispatchGameEvent] = useClientContext();
