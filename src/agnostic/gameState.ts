@@ -3,6 +3,10 @@ import { Maybe } from 'src/agnostic/types';
 export type PlayerId = string;
 export type GameId = string;
 
+/**
+ * the state of the game, synced
+ * between the server and all players
+ */
 export interface GameState {
 	id: GameId;
 	players: GamePlayers;
@@ -18,6 +22,9 @@ export interface GamePlayer {
 	score: number;
 }
 
+/**
+ * new player is joining the game
+ */
 export interface JoinEvent {
 	type: 'join';
 	data: {
@@ -26,11 +33,17 @@ export interface JoinEvent {
 	};
 }
 
+/**
+ * player has left the game
+ */
 export interface LeftEvent {
 	type: 'left';
 	data: PlayerId;
 }
 
+/**
+ * increase player's score
+ */
 export interface IncPlayerScore {
 	type: 'inc-player-score';
 	data: {
@@ -39,6 +52,9 @@ export interface IncPlayerScore {
 	};
 }
 
+/**
+ * change player's name
+ */
 export interface ChangePlayerName {
 	type: 'change-player-name';
 	data: {
@@ -47,6 +63,10 @@ export interface ChangePlayerName {
 	};
 }
 
+/**
+ * union type representing all possible types
+ * of game events
+ */
 export type GameEvent = JoinEvent | LeftEvent | IncPlayerScore | ChangePlayerName;
 
 export function initGameState(gameId: GameId): GameState {
@@ -56,6 +76,9 @@ export function initGameState(gameId: GameId): GameState {
 	};
 }
 
+/**
+ * check if we can produce the next game state using the given game event
+ */
 export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean {
 	if (gameEvent.type === 'join') {
 		// player can only join if they aren't already in the game
@@ -74,6 +97,10 @@ export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean 
 	return true;
 }
 
+/**
+ * produce the next game state using the given game event, doesn't
+ * do any validation, assumes the game event has already been validated
+ */
 export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 	if (gameEvent.type === 'join') {
 		gameState.players[gameEvent.data.id] = {

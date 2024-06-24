@@ -55,6 +55,10 @@ function correctPass(gameId: GameId, playerId: PlayerId, pass: string): boolean 
 	return true;
 }
 
+/**
+ * checks if the player that produced this event had the permission
+ * to do so
+ */
 function hasPermission(playerId: PlayerId, gameId: GameId, gameEvent: GameEvent): boolean {
 	const gameState = serverContext[gameId].gameState;
 	const player: Maybe<GamePlayer> = gameState.players[playerId];
@@ -82,10 +86,16 @@ function hasPermission(playerId: PlayerId, gameId: GameId, gameEvent: GameEvent)
 	return true;
 }
 
+/**
+ * checks if given game event can advance the specific game on the server
+ */
 function canAdvanceServerGame(gameId: GameId, gameEvent: GameEvent): boolean {
 	return canAdvance(serverContext[gameId].gameState, gameEvent);
 }
 
+/**
+ * advances game state on the server given the game event
+ */
 function advanceServerGame(gameId: GameId, gameEvent: GameEvent) {
 	const currentGameState = serverContext[gameId].gameState;
 	const nextGameState = advance(currentGameState, gameEvent);
