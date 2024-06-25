@@ -115,18 +115,15 @@ function correctPass(gameId: GameId, playerId: PlayerId, pass: string): boolean 
 	if (!serverGameContext) {
 		return true;
 	}
-
 	const serverPlayerState: ServerPlayerState = serverGameContext.serverState.players[playerId];
 	// brand new player, so pass is correct
 	if (!serverPlayerState) {
 		return true;
 	}
-
 	// existing player, must check pass is correct
 	if (serverPlayerState.pass !== pass) {
 		return false;
 	}
-
 	return true;
 }
 
@@ -168,6 +165,9 @@ function hasPermission(playerId: PlayerId, gameId: GameId, gameEvent: GameEvent)
 		// team sizes balanced while giving players
 		// the freedom to switch teams
 		return false;
+	} else if (gameEvent.type === 'ready') {
+		// players can only ready themselves
+		return playerId === gameEvent.data;
 	}
 	return true;
 }

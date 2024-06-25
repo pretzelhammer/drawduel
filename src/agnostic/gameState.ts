@@ -44,6 +44,7 @@ export interface GamePlayer {
 	name: string;
 	score: number;
 	team: TeamId;
+	ready: boolean;
 }
 
 /**
@@ -107,6 +108,11 @@ export interface ChangeGamePhaseEvent {
 	data: GamePhase;
 }
 
+export interface PlayerReadyEvent {
+	type: 'ready';
+	data: PlayerId;
+}
+
 /**
  * union type representing all possible types
  * of game events
@@ -117,7 +123,8 @@ export type GameEvent =
 	| LeftEvent
 	| IncPlayerScoreEvent
 	| ChangePlayerNameEvent
-	| ChangeGamePhaseEvent;
+	| ChangeGamePhaseEvent
+	| PlayerReadyEvent;
 
 export function initGameState(gameId: GameId): GameState {
 	return {
@@ -159,6 +166,10 @@ export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean 
 		// on that team
 		const player: Maybe<GamePlayer> = gameState.players[gameEvent.data.id];
 		return player && player.team !== gameEvent.data.team;
+	} else if (gameEvent.type === 'ready') {
+		// player exists and isn't already ready
+		const player: Maybe<GamePlayer> = gameState.players[gameEvent.data];
+		return player && !player.ready;
 	}
 	return true;
 }
@@ -172,6 +183,7 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 		gameState.players[gameEvent.data.id] = {
 			...gameEvent.data,
 			score: 0,
+			ready: false,
 		};
 		const team: GameTeam = gameState.teams[gameEvent.data.team] || {
 			players: {},
@@ -225,6 +237,8 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 			role: 'guesser',
 		};
 		gameState.teams[newTeamId] = newTeam;
+	} else if (gameEvent.type === 'ready') {
+		gameState.players[gameEvent.data].ready = true;
 	}
 	return gameState;
 }
