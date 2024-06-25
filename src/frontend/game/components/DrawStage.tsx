@@ -38,21 +38,46 @@ export const DrawStage: FunctionalComponent = () => {
 			<Canvas brushSettings={brushSettings} canvasDimensions={canvasDimensions} />
 			<div class={classes['brush-options']}>
 				<div class={classes['tools']}>
-					<button>
-						<p>✏️</p>️
-					</button>
+					<button>✏️</button>
 					<button>🧽</button>
 					<button>🗑️</button>
 				</div>
 				<div class={classes['sizes']}>
-					<button>
-						<div class={classes['small']}></div>
+					<button
+						onClick={() =>
+							setBrushSettings({
+								...brushSettings,
+								size: Size.Small,
+							})
+						}
+					>
+						<div
+							class={`${classes['small']} ${brushSettings.size === Size.Small ? classes['size--selected'] : ''}`}
+						></div>
 					</button>
-					<button>
-						<div class={classes['medium']}></div>
+					<button
+						onClick={() =>
+							setBrushSettings({
+								...brushSettings,
+								size: Size.Medium,
+							})
+						}
+					>
+						<div
+							class={`${classes['medium']} ${brushSettings.size === Size.Medium ? classes['size--selected'] : ''}`}
+						></div>
 					</button>
-					<button>
-						<div class={classes['large']}></div>
+					<button
+						onClick={() =>
+							setBrushSettings({
+								...brushSettings,
+								size: Size.Large,
+							})
+						}
+					>
+						<div
+							class={`${classes['large']} ${brushSettings.size === Size.Large ? classes['size--selected'] : ''}`}
+						></div>
 					</button>
 				</div>
 				<div class={classes['colors']}>

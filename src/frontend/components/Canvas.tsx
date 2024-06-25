@@ -60,6 +60,7 @@ export const Canvas: FunctionalComponent<CanvasProps> = ({ brushSettings, canvas
 			context.beginPath();
 			context.strokeStyle = color;
 			context.lineWidth = size;
+			context.lineCap = 'round';
 			context.moveTo(coord.x, coord.y);
 			reposition(event);
 			context.lineTo(coord.x, coord.y);

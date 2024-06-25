@@ -75,6 +75,10 @@
 	width: 24px;
 }
 
+.sizes div.size--selected {
+	background: black;
+}
+
 .colors {
 	display: flex;
 }
