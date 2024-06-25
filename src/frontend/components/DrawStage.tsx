@@ -1,7 +1,7 @@
 import { type FunctionalComponent } from 'preact';
 import { useRef, useState } from 'preact/hooks';
 import { Canvas } from 'src/frontend/components/Canvas.tsx';
-import classes from 'src/frontend/game/components/DrawStage.module.css';
+import classes from 'src/frontend/components/DrawStage.module.css';
 
 export enum Color {
 	Black = 'black',

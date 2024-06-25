@@ -1,5 +1,5 @@
 import { type FunctionalComponent, type JSX } from 'preact';
-import { DrawStage } from 'src/frontend/game/components/DrawStage.tsx';
+import { DrawStage } from 'src/frontend/components/DrawStage.tsx';
 
 export interface TeamPreview {
 	readonly teamName: string;
