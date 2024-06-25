@@ -17,14 +17,46 @@ export interface GameState {
 	phase: GamePhase;
 	teams: GameTeams;
 	players: GamePlayers;
-	roundsMeta: RoundsMeta;
+	timer: number;
+	round: RoundId;
+	rounds: Rounds;
+	lightningRound: LightningRound;
 }
 
-export interface RoundsMeta {
-	nextRoundStartsAt: number;
-	pickWordEndsAt: number;
-	playingEndsAt: number;
-	currentRound: RoundId;
+export type Rounds = Round[];
+
+export interface Round {
+	phase: RoundPhase;
+	drawers: PlayerId[];
+	chooser: PlayerId;
+	choices: WordChoices;
+	word: ChosenWord;
+	teams: RoundTeams;
+}
+
+export interface RoundTeams {
+	[key: TeamId]: RoundTeam;
+}
+
+export interface RoundTeam {
+	drawing: string; // TODO make array of draw events
+	guesses: string; // TODO make array of guess events
+}
+
+export interface WordChoices {
+	easy: string;
+	hard: string;
+}
+
+export interface ChosenWord {
+	content: string;
+	difficulty: string;
+}
+
+export type RoundPhase = 'intro' | 'pick-word' | 'pre-play' | 'play' | 'post-round';
+
+export interface LightningRound {
+	// TODO
 }
 
 export interface GameTeams {
@@ -158,12 +190,10 @@ export function initGameState(gameId: GameId): GameState {
 		phase: 'pre-game',
 		players: {},
 		teams: {},
-		roundsMeta: {
-			nextRoundStartsAt: 0,
-			pickWordEndsAt: 0,
-			playingEndsAt: 0,
-			currentRound: '0',
-		},
+		timer: 0,
+		round: '0',
+		rounds: [],
+		lightningRound: {},
 	};
 }
 
