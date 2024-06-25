@@ -1,0 +1,94 @@
+.stage button {
+	background: none;
+	color: inherit;
+	border: none;
+	padding: 0;
+	font: inherit;
+	cursor: pointer;
+	outline: inherit;
+	box-shadow: none;
+	border-radius: 0;
+}
+
+.stage button:active,
+.stage button:focus-visible,
+.stage button:active:not(:disabled) {
+	box-shadow: none;
+	transform: none;
+}
+
+.stage {
+	display: flex;
+	flex-direction: row;
+	column-gap: 3rem;
+}
+
+.brush-options {
+	display: flex;
+	flex-direction: column;
+	row-gap: 1rem;
+}
+
+.tools {
+	display: flex;
+	column-gap: 0.5rem;
+}
+
+.tools button {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background: white;
+	border: solid 2px gray;
+	border-radius: 0.25rem;
+	height: 2.5rem;
+	width: 2.5rem;
+	text-align: center;
+}
+
+.sizes {
+	display: flex;
+}
+
+.sizes button {
+	height: 2rem;
+	width: 2rem;
+}
+
+.sizes div {
+	border-radius: 50%;
+	background: grey;
+}
+
+.sizes .small {
+	height: 4px;
+	width: 4px;
+}
+
+.sizes .medium {
+	height: 12px;
+	width: 12px;
+}
+
+.sizes .large {
+	height: 24px;
+	width: 24px;
+}
+
+.sizes div.size--selected {
+	background: black;
+}
+
+.colors {
+	display: flex;
+}
+
+.colors button {
+	height: 2rem;
+	width: 1.5rem;
+}
+
+button.color--selected {
+	border-radius: 4px;
+	transform: scale(1.25);
+}
