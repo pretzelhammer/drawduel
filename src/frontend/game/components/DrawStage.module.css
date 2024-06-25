@@ -46,6 +46,11 @@
 	text-align: center;
 }
 
+button.tool--selected {
+	border: solid black 0.15rem;
+	transform: scale(1.15);
+}
+
 .sizes {
 	display: flex;
 }
