@@ -73,7 +73,7 @@ export const Canvas: FunctionalComponent<CanvasProps> = ({ brushSettings, canvas
 			canvas.removeEventListener('mousedown', start);
 			canvas.removeEventListener('mouseup', stop);
 		};
-	}, []);
+	}, [brushSettings]);
 
 	return (
 		<canvas

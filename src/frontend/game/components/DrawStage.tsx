@@ -16,12 +16,18 @@ export enum Color {
 	Brown = 'brown',
 }
 
+export enum Size {
+	Small = 4,
+	Medium = 12,
+	Large = 24,
+}
+
 export const DrawStage: FunctionalComponent = () => {
 	const [color, setColor] = useState(Color.Black);
-	const brushSettings = {
-		color: 'black',
-		size: 2,
-	};
+	const [brushSettings, setBrushSettings] = useState({
+		color: Color.Black,
+		size: Size.Small,
+	});
 	const canvasDimensions = {
 		width: 400,
 		height: 400,
@@ -51,7 +57,16 @@ export const DrawStage: FunctionalComponent = () => {
 				</div>
 				<div class={classes['colors']}>
 					{colors.map((color) => (
-						<button style={{ backgroundColor: color }} onClick={() => setColor(color)}></button>
+						<button
+							class={brushSettings.color === color ? classes['color--selected'] : ''}
+							style={{ backgroundColor: color }}
+							onClick={() =>
+								setBrushSettings({
+									...brushSettings,
+									color,
+								})
+							}
+						></button>
 					))}
 				</div>
 			</div>

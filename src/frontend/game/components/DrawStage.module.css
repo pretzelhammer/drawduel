@@ -83,3 +83,8 @@
 	height: 2rem;
 	width: 1.5rem;
 }
+
+button.color--selected {
+	border-radius: 4px;
+	transform: scale(1.25);
+}
