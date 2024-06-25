@@ -99,7 +99,6 @@ export const DrawStage: FunctionalComponent = () => {
 							onClick={() =>
 								setBrushSettings({
 									...brushSettings,
-									tool: Tool.Pencil,
 									size,
 								})
 							}
