@@ -4,8 +4,11 @@ import { randomShortId } from 'src/agnostic/random.ts';
 export type PlayerId = string;
 export type GameId = string;
 export type TeamId = string;
-export type RoundId = string;
-export type GamePhase = 'pre-game' | 'rounds' | 'post-game';
+
+// 0 = rounds haven't started
+// 1 - 15 = regular round
+export type RoundId = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
+export type GamePhase = 'pre-game' | 'rounds' | 'lightning-round' | 'post-game';
 
 /**
  * the state of the game, synced
@@ -26,7 +29,7 @@ export interface GameState {
 export type Rounds = Round[];
 
 export interface Round {
-	phase: RoundPhase;
+	phase: RoundPhaseType;
 	drawers: PlayerId[];
 	chooser: PlayerId;
 	choices: WordChoices;
@@ -53,10 +56,13 @@ export interface ChosenWord {
 	difficulty: string;
 }
 
-export type RoundPhase = 'intro' | 'pick-word' | 'pre-play' | 'play' | 'post-round';
+export type RoundPhaseType = 'intro' | 'pick-word' | 'pre-play' | 'play' | 'post-round';
+
+export type LightningRoundPhaseType = 'intro' | 'play' | 'post-round';
 
 export interface LightningRound {
-	// TODO
+	phase: LightningRoundPhaseType;
+	// TODO add more stuff here
 }
 
 export interface GameTeams {
@@ -191,9 +197,11 @@ export function initGameState(gameId: GameId): GameState {
 		players: {},
 		teams: {},
 		timer: 0,
-		round: '0',
+		round: 0,
 		rounds: [],
-		lightningRound: {},
+		lightningRound: {
+			phase: 'intro',
+		},
 	};
 }
 
