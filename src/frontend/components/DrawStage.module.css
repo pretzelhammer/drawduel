@@ -1,4 +1,4 @@
-.stage button {
+.draw-mode button {
 	background: none;
 	color: inherit;
 	border: none;
@@ -10,9 +10,9 @@
 	border-radius: 0;
 }
 
-.stage button:active,
-.stage button:focus-visible,
-.stage button:active:not(:disabled) {
+.draw-mode button:active,
+.draw-mode button:focus-visible,
+.draw-mode button:active:not(:disabled) {
 	box-shadow: none;
 	transform: none;
 }
@@ -23,7 +23,7 @@
 	column-gap: 3rem;
 }
 
-.brush-options {
+.draw-mode {
 	display: flex;
 	flex-direction: column;
 	row-gap: 1rem;
@@ -96,4 +96,8 @@ button.tool--selected {
 button.color--selected {
 	border-radius: 4px;
 	transform: scale(1.25);
+}
+
+.guess-mode button {
+	margin-top: 1rem;
 }

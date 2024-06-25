@@ -2,6 +2,7 @@ import { type FunctionalComponent } from 'preact';
 import { useRef, useState } from 'preact/hooks';
 import { Canvas } from 'src/frontend/components/Canvas.tsx';
 import classes from 'src/frontend/components/DrawStage.module.css';
+import { LineInput } from 'src/frontend/components/LineInput.tsx';
 
 export enum Color {
 	Black = 'black',
@@ -38,7 +39,18 @@ const TOOLS = [
 	{ icon: '🧽', tool: Tool.Eraser },
 ];
 
-export const DrawStage: FunctionalComponent = () => {
+export enum Mode {
+	Draw = 'MODE_DRAW',
+	Guess = 'MODE_GUESS',
+}
+
+export interface DrawStageProps {
+	readonly mode: Mode;
+	readonly onGuess: (guess: string) => void;
+}
+
+export const DrawStage: FunctionalComponent<DrawStageProps> = ({ mode, onGuess }) => {
+	const [guess, setGuess] = useState('');
 	const ref = useRef<HTMLCanvasElement | null>(null);
 	const [brushSettings, setBrushSettings] = useState({
 		color: Color.Black,
@@ -63,8 +75,75 @@ export const DrawStage: FunctionalComponent = () => {
 		context.clearRect(0, 0, canvas.width, canvas.height);
 	};
 
+	const DrawSideBar = (
+		<div className={classes['draw-mode']}>
+			<div className={classes['tools']}>
+				{TOOLS.map(({ icon, tool }) => (
+					<button
+						key={tool}
+						onClick={() =>
+							setBrushSettings({
+								...brushSettings,
+								tool,
+							})
+						}
+						className={brushSettings.tool === tool ? classes['tool--selected'] : ''}
+					>
+						{icon}
+					</button>
+				))}
+
+				<button onClick={onClearClick}>️🗑</button>
+			</div>
+			<div className={classes['sizes']}>
+				{SIZES.map(({ name, size }) => (
+					<button
+						key={name}
+						onClick={() =>
+							setBrushSettings({
+								...brushSettings,
+								size,
+							})
+						}
+					>
+						<div
+							className={`${classes[name]} ${brushSettings.size === size ? classes['size--selected'] : ''}`}
+						></div>
+					</button>
+				))}
+			</div>
+			<div className={classes['colors']}>
+				{colors.map((color) => (
+					<button
+						key={color}
+						className={brushSettings.color === color ? classes['color--selected'] : ''}
+						style={{ backgroundColor: color }}
+						onClick={() =>
+							setBrushSettings({
+								...brushSettings,
+								tool: Tool.Pencil,
+								color,
+							})
+						}
+					></button>
+				))}
+			</div>
+		</div>
+	);
+
+	const GuessSideBar = (
+		<div class={classes['guess-mode']}>
+			<LineInput
+				placeholder="enter guess here.."
+				value={guess}
+				onInput={(event) => setGuess((event.target as HTMLInputElement).value)}
+			/>
+			<button onClick={() => onGuess(guess)}>Guess</button>
+		</div>
+	);
+
 	return (
-		<div class={classes['stage']}>
+		<div className={classes['stage']}>
 			<Canvas
 				brushSettings={{
 					...brushSettings,
@@ -73,59 +152,7 @@ export const DrawStage: FunctionalComponent = () => {
 				canvasDimensions={canvasDimensions}
 				ref={ref}
 			/>
-			<div class={classes['brush-options']}>
-				<div class={classes['tools']}>
-					{TOOLS.map(({ icon, tool }) => (
-						<button
-							key={tool}
-							onClick={() =>
-								setBrushSettings({
-									...brushSettings,
-									tool,
-								})
-							}
-							className={brushSettings.tool === tool ? classes['tool--selected'] : ''}
-						>
-							{icon}
-						</button>
-					))}
-
-					<button onClick={onClearClick}>️🗑</button>
-				</div>
-				<div class={classes['sizes']}>
-					{SIZES.map(({ name, size }) => (
-						<button
-							key={name}
-							onClick={() =>
-								setBrushSettings({
-									...brushSettings,
-									size,
-								})
-							}
-						>
-							<div
-								className={`${classes[name]} ${brushSettings.size === size ? classes['size--selected'] : ''}`}
-							></div>
-						</button>
-					))}
-				</div>
-				<div class={classes['colors']}>
-					{colors.map((color) => (
-						<button
-							key={color}
-							class={brushSettings.color === color ? classes['color--selected'] : ''}
-							style={{ backgroundColor: color }}
-							onClick={() =>
-								setBrushSettings({
-									...brushSettings,
-									tool: Tool.Pencil,
-									color,
-								})
-							}
-						></button>
-					))}
-				</div>
-			</div>
+			{mode === Mode.Draw ? DrawSideBar : GuessSideBar}
 		</div>
 	);
 };

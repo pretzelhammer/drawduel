@@ -1,5 +1,6 @@
-import { type FunctionalComponent, type JSX } from 'preact';
-import { DrawStage } from 'src/frontend/components/DrawStage.tsx';
+import { type FunctionalComponent } from 'preact';
+import { useState } from 'preact/hooks';
+import { DrawStage, Mode } from 'src/frontend/components/DrawStage.tsx';
 
 export interface TeamPreview {
 	readonly teamName: string;
@@ -14,7 +15,9 @@ export interface RoundProps {
 }
 
 export const Round: FunctionalComponent<RoundProps> = ({ teamName, teamPreviews }: RoundProps) => {
-	// TODO: replace time with something from server
+	// TODO: server stuff. thanks kirill
+	const [mode, setMode] = useState(Mode.Draw);
+	const [guess, setGuess] = useState('');
 	const time = '1:00';
 	return (
 		<>
@@ -23,13 +26,14 @@ export const Round: FunctionalComponent<RoundProps> = ({ teamName, teamPreviews 
 					<h2>{time}</h2>
 					<h3>{teamName}</h3>
 				</div>
-				<DrawStage />
+				<DrawStage mode={mode} onGuess={setGuess} />
 			</div>
 			<div class="previews">
 				{teamPreviews.map(() => (
 					<div>TODO</div>
 				))}
 			</div>
+			<button onClick={() => setMode(mode === Mode.Guess ? Mode.Draw : Mode.Guess)}>toggle modes</button>
 		</>
 	);
 };

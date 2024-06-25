@@ -10,9 +10,9 @@ export interface LineInputProps {
 export const LineInput: FunctionalComponent<LineInputProps> = (props) => {
 	const { placeholder, value, onInput } = props;
 	return (
-		<>
+		<div>
 			<input type="text" value={value} placeholder={placeholder} onInput={onInput} />
 			<div class={classes.line} />
-		</>
+		</div>
 	);
 };
