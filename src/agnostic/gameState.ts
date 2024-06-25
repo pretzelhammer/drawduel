@@ -201,15 +201,30 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 	} else if (gameEvent.type === 'change-game-phase') {
 		gameState.phase = gameEvent.data;
 	} else if (gameEvent.type === 'join-team') {
-		gameState.players[gameEvent.data.id].team = gameEvent.data.team;
-		const team: GameTeam = gameState.teams[gameEvent.data.team] || {
+		const playerId = gameEvent.data.id;
+		const newTeamId = gameEvent.data.team;
+		const oldTeamId = gameState.players[playerId].team;
+		const oldTeam = gameState.teams[oldTeamId];
+		// delete player from old team, if exists
+		if (oldTeam) {
+			delete oldTeam.players[playerId];
+			if (Object.keys(oldTeam.players).length === 0) {
+				// if removing this player makes the team
+				// empty then also delete the team
+				delete gameState.teams[oldTeamId];
+			}
+		}
+		// player joins new team
+		gameState.players[playerId].team = newTeamId;
+		// create new team if it doesn't already exist
+		const newTeam: GameTeam = gameState.teams[newTeamId] || {
 			players: {},
 			score: 0,
 		};
-		team.players[gameEvent.data.id] = {
+		newTeam.players[playerId] = {
 			role: 'guesser',
 		};
-		gameState.teams[gameEvent.data.team] = team;
+		gameState.teams[newTeamId] = newTeam;
 	}
 	return gameState;
 }
