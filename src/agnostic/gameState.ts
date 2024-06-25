@@ -59,6 +59,17 @@ export interface JoinEvent {
 }
 
 /**
+ * player is joining or changing teams
+ */
+export interface JoinTeamEvent {
+	type: 'join-team';
+	data: {
+		id: PlayerId;
+		team: TeamId;
+	};
+}
+
+/**
  * player has left the game
  */
 export interface LeftEvent {
@@ -100,7 +111,13 @@ export interface ChangeGamePhaseEvent {
  * union type representing all possible types
  * of game events
  */
-export type GameEvent = JoinEvent | LeftEvent | IncPlayerScoreEvent | ChangePlayerNameEvent | ChangeGamePhaseEvent;
+export type GameEvent =
+	| JoinEvent
+	| JoinTeamEvent
+	| LeftEvent
+	| IncPlayerScoreEvent
+	| ChangePlayerNameEvent
+	| ChangeGamePhaseEvent;
 
 export function initGameState(gameId: GameId): GameState {
 	return {
@@ -137,6 +154,11 @@ export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean 
 		return player.name !== gameEvent.data.name;
 	} else if (gameEvent.type === 'change-game-phase') {
 		return gameState.phase !== gameEvent.data;
+	} else if (gameEvent.type === 'join-team') {
+		// only if player exists and isn't already
+		// on that team
+		const player: Maybe<GamePlayer> = gameState.players[gameEvent.data.id];
+		return player && player.team !== gameEvent.data.team;
 	}
 	return true;
 }
@@ -178,6 +200,16 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 		gameState.players[gameEvent.data.id].name = gameEvent.data.name;
 	} else if (gameEvent.type === 'change-game-phase') {
 		gameState.phase = gameEvent.data;
+	} else if (gameEvent.type === 'join-team') {
+		gameState.players[gameEvent.data.id].team = gameEvent.data.team;
+		const team: GameTeam = gameState.teams[gameEvent.data.team] || {
+			players: {},
+			score: 0,
+		};
+		team.players[gameEvent.data.id] = {
+			role: 'guesser',
+		};
+		gameState.teams[gameEvent.data.team] = team;
 	}
 	return gameState;
 }

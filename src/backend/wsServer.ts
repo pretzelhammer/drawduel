@@ -14,17 +14,92 @@ import {
 	GamePlayer,
 	GameState,
 	JoinEvent,
+	JoinTeamEvent,
 	LeftEvent,
 	advance,
 	canAdvance,
 	type GameId,
 	type PlayerId,
+	type TeamId,
 } from 'src/agnostic/gameState.ts';
 import { type ServerEvent, type ClientError, ClientEvent, BatchEvent } from 'src/agnostic/events.ts';
 import { validGameId, validName, validPass, validPlayerId } from 'src/agnostic/validation';
 import { Maybe } from 'src/agnostic/types';
 
 const wsOptions: Partial<ServerOptions> = {};
+
+function smallestTeam(gameState: GameState): TeamId {
+	const teamIds = Object.keys(gameState.teams);
+	if (teamIds.length === 0) {
+		return '1';
+	}
+	let minPlayers = Number.MAX_SAFE_INTEGER;
+	let minTeamId: TeamId = '1';
+	for (let teamId of teamIds) {
+		const teamPlayerCount = Object.keys(gameState.teams[teamId].players).length;
+		if (teamPlayerCount < minPlayers) {
+			minPlayers = teamPlayerCount;
+			minTeamId = teamId;
+		}
+	}
+	return minTeamId;
+}
+
+function distributeAcrossTeams(playerIds: PlayerId[], teamCount: number): JoinTeamEvent[] {
+	const joinTeamEvents: JoinTeamEvent[] = [];
+	let teamIdInt = 0;
+	for (let playerId of playerIds) {
+		joinTeamEvents.push({
+			type: 'join-team',
+			data: {
+				id: playerId,
+				team: `${teamIdInt + 1}`,
+			},
+		});
+		teamIdInt += 1;
+		teamIdInt %= teamCount;
+	}
+	return joinTeamEvents;
+}
+
+/**
+ * can improve this by a lot buuuuut it's okay for now
+ */
+function rebalanceTeams(gameState: GameState): JoinTeamEvent[] {
+	const playerIds: PlayerId[] = Object.keys(gameState.players);
+	const playerCount = playerIds.length;
+
+	if (playerCount <= 3) {
+		// 1 team, 1-3 players
+		return distributeAcrossTeams(playerIds, 1);
+	} else if (playerCount >= 4 && playerCount <= 5) {
+		// 2 teams, 2-3 players each
+		return distributeAcrossTeams(playerIds, 2);
+	} else if (playerCount >= 6 && playerCount <= 7) {
+		// 3 teams, 2-3 players each
+		return distributeAcrossTeams(playerIds, 3);
+	} else if (playerCount >= 8 && playerCount <= 20) {
+		// 4 teams, 2-5 players each
+		return distributeAcrossTeams(playerIds, 4);
+	} else if (playerCount >= 21 && playerCount <= 25) {
+		// 5 teams, 4-5 players each
+		return distributeAcrossTeams(playerIds, 5);
+	} else if (playerCount >= 26 && playerCount <= 30) {
+		// 6 teams, 4-5 players each
+		return distributeAcrossTeams(playerIds, 6);
+	} else if (playerCount >= 21 && playerCount <= 35) {
+		// 7 teams, 4-5 players each
+		return distributeAcrossTeams(playerIds, 7);
+	} else if (playerCount >= 36 && playerCount <= 40) {
+		// 8 teams, 4-5 players each
+		return distributeAcrossTeams(playerIds, 8);
+	} else if (playerCount >= 41 && playerCount <= 81) {
+		// 9 teams, 4-9 players each
+		return distributeAcrossTeams(playerIds, 9);
+	} else {
+		throw new Error(`TOO MANY PLAYERS ${playerCount}`);
+	}
+}
 
 if (process.env.NODE_ENV === 'development') {
 	wsOptions.cors = {
@@ -85,6 +160,13 @@ function hasPermission(playerId: PlayerId, gameId: GameId, gameEvent: GameEvent)
 	} else if (gameEvent.type === 'change-game-phase') {
 		// players can never change the game phase,
 		// only the server can issue this game event
+		return false;
+	} else if (gameEvent.type === 'join-team') {
+		// right now server controls which players are
+		// on which teams, we might change this in the
+		// future if we can figure out how to keep the
+		// team sizes balanced while giving players
+		// the freedom to switch teams
 		return false;
 	}
 	return true;
@@ -192,10 +274,34 @@ export function setupWsServer(httpServer: HttpServer) {
 		if (!serverGameContext.gameState.players[playerId]) {
 			// create and broadcast join event to all current players in game
 			// except for the just connected player
-			const joinEvent: JoinEvent = { type: 'join', data: { id: playerId, name, team: '1' } };
+			const smallestTeamId = smallestTeam(serverGameContext.gameState);
+			const joinEvent: JoinEvent = { type: 'join', data: { id: playerId, name, team: smallestTeamId } };
 			if (canAdvanceServerGame(gameId, joinEvent)) {
 				advanceServerGame(gameId, joinEvent);
-				emitAll(joinEvent);
+				// only rebalance teams before game has started,
+				// as well as moving players around this operation
+				// can also create or delete teams
+				const joinTeamEvents: JoinTeamEvent[] = [];
+				if (serverGameContext.gameState.phase === 'pre-game') {
+					const rebalanceEvents: JoinTeamEvent[] = rebalanceTeams(serverGameContext.gameState);
+					for (let rebalanceEvent of rebalanceEvents) {
+						if (canAdvanceServerGame(gameId, rebalanceEvent)) {
+							advanceServerGame(gameId, rebalanceEvent);
+							joinTeamEvents.push(rebalanceEvent);
+						}
+					}
+				}
+				// if this player joining triggered a rebalance send
+				// a batch event down
+				if (joinTeamEvents.length > 0) {
+					const batchEvent: BatchEvent = {
+						type: 'batch',
+						data: [joinEvent, ...joinTeamEvents],
+					};
+					emitAll(batchEvent);
+				} else {
+					emitAll(joinEvent);
+				}
 			}
 		}
 
@@ -218,7 +324,29 @@ export function setupWsServer(httpServer: HttpServer) {
 				const leftEvent: LeftEvent = { type: 'left', data: playerId };
 				if (canAdvanceServerGame(gameId, leftEvent)) {
 					advanceServerGame(gameId, leftEvent);
-					emitAll(leftEvent);
+					// player leaving can also trigger team rebalance
+					// if the game hasn't started yet
+					const joinTeamEvents: JoinTeamEvent[] = [];
+					if (serverGameContext.gameState.phase === 'pre-game') {
+						const rebalanceEvents: JoinTeamEvent[] = rebalanceTeams(serverGameContext.gameState);
+						for (let rebalanceEvent of rebalanceEvents) {
+							if (canAdvanceServerGame(gameId, rebalanceEvent)) {
+								advanceServerGame(gameId, rebalanceEvent);
+								joinTeamEvents.push(rebalanceEvent);
+							}
+						}
+					}
+					// if this player joining triggered a rebalance send
+					// a batch event down
+					if (joinTeamEvents.length > 0) {
+						const batchEvent: BatchEvent = {
+							type: 'batch',
+							data: [leftEvent, ...joinTeamEvents],
+						};
+						emitAll(batchEvent);
+					} else {
+						emitAll(leftEvent);
+					}
 				}
 			}
 		});
