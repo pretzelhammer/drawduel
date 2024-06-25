@@ -5,7 +5,7 @@ import { useClientContext } from 'src/frontend/game/ClientContextProvider.tsx';
 import { Route } from 'src/frontend/game/clientContext.ts';
 
 export const Main: FunctionalComponent = () => {
-	const [clientContext] = useClientContext();
+	const { clientContext } = useClientContext();
 	switch (clientContext.clientState.route) {
 		case Route.Lobby:
 			return <Lobby />;

@@ -2,10 +2,10 @@ import { FunctionalComponent } from 'preact';
 import { useClientContext } from '../ClientContextProvider';
 
 export const IncreaseMyScore: FunctionalComponent = () => {
-	let [clientContext, dispatchGameEvent] = useClientContext();
+	let { clientContext, dispatchClientEvent } = useClientContext();
 
 	const onClick = () => {
-		dispatchGameEvent({
+		dispatchClientEvent({
 			type: 'inc-player-score',
 			data: {
 				id: clientContext.clientState.player.id,

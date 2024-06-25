@@ -6,7 +6,7 @@ import { validName } from 'src/agnostic/validation.ts';
 import { randomPlayerName } from 'src/agnostic/random';
 
 export const ChangeName: FunctionalComponent = () => {
-	let [clientContext, dispatchGameEvent] = useClientContext();
+	let { clientContext, dispatchClientEvent } = useClientContext();
 	const myId = clientContext.clientState.player.id;
 	const me = clientContext.gameState.players[myId];
 	let [inputValue, setInputValue] = useState('');
@@ -16,14 +16,14 @@ export const ChangeName: FunctionalComponent = () => {
 	const canChangeName = validName(inputValue) && me.name !== inputValue;
 
 	const changeName = () => {
-		// dispatchGameEvent({
+		// dispatchClientEvent({
 		// 	type: 'change-player-name',
 		// 	data: {
 		// 		id: myId,
 		// 		name: inputValue,
 		// 	},
 		// });
-		dispatchGameEvent({
+		dispatchClientEvent({
 			type: 'batch',
 			data: [
 				{

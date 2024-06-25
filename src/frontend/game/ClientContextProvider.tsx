@@ -15,17 +15,18 @@ import {
 import { connect } from 'src/frontend/game/utils/sockets.ts';
 import { Maybe } from 'src/agnostic/types.ts';
 
-type UseClientContext = [
-	ClientContext,
-	(clientEvent: ClientEvent) => void, // dispatch client events
-	(clientState: ClientState) => void, // set client state
-];
+export interface UseClientContext {
+	clientContext: ClientContext;
+	dispatchClientEvent: (clientEvent: ClientEvent) => void;
+	setClientState: (clientState: ClientState) => void;
+}
 
-const ClientContextKey = createContext<UseClientContext>([
-	dummyClientContext(),
-	(_clientEvent: ClientEvent) => {},
-	(_clientState: ClientState) => {},
-]);
+// use dummy values for default
+const ClientContextKey = createContext<UseClientContext>({
+	clientContext: dummyClientContext(),
+	dispatchClientEvent: (_clientEvent: ClientEvent) => {},
+	setClientState: (_clientState: ClientState) => {},
+});
 
 function useClientContext(): UseClientContext {
 	return useContext(ClientContextKey);
@@ -82,7 +83,7 @@ const ClientContextProvider: FunctionalComponent = ({ children }) => {
 		});
 	}, []);
 
-	const dispatchGameEvent = (event: ClientEvent) => {
+	const dispatchClientEvent = (event: ClientEvent) => {
 		if (canOptimisticallyRender(event)) {
 			setClientContext((currentClientContext) => updateClientContext(currentClientContext, event));
 		}
@@ -108,7 +109,7 @@ const ClientContextProvider: FunctionalComponent = ({ children }) => {
 	const syncedWithServer = !!clientContext.gameState.players[myId];
 
 	return (
-		<ClientContextKey.Provider value={[clientContext, dispatchGameEvent, setClientState]}>
+		<ClientContextKey.Provider value={{ clientContext, dispatchClientEvent, setClientState }}>
 			{syncedWithServer ? children : 'loading...'}
 		</ClientContextKey.Provider>
 	);

@@ -7,9 +7,9 @@ import { Route } from 'src/frontend/game/clientContext.ts';
 import { PrintClientContext } from 'src/frontend/game/components/PrintClientContext.tsx';
 
 export const Lobby: FunctionalComponent = () => {
-	const [clientContext, _, setClientContext] = useClientContext();
+	const { clientContext, setClientState } = useClientContext();
 	const goToRound = () => {
-		setClientContext({
+		setClientState({
 			...clientContext.clientState,
 			route: Route.Round,
 		});
