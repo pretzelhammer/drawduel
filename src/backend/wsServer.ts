@@ -16,6 +16,8 @@ import {
 	JoinEvent,
 	JoinTeamEvent,
 	LeftEvent,
+	PlayerDisconnectEvent,
+	PlayerReconnectEvent,
 	advance,
 	canAdvance,
 	type GameId,
@@ -168,6 +170,12 @@ function hasPermission(playerId: PlayerId, gameId: GameId, gameEvent: GameEvent)
 	} else if (gameEvent.type === 'ready') {
 		// players can only ready themselves
 		return playerId === gameEvent.data;
+	} else if (gameEvent.type === 'reconnect') {
+		// only server can issue this event
+		return false;
+	} else if (gameEvent.type === 'disconnect') {
+		// only server can issue this event
+		return false;
 	}
 	return true;
 }
@@ -303,6 +311,16 @@ export function setupWsServer(httpServer: HttpServer) {
 					emitAll(joinEvent);
 				}
 			}
+		} else {
+			// emit reconnected event for existing player
+			const reconnectEvent: PlayerReconnectEvent = {
+				type: 'reconnect',
+				data: playerId,
+			};
+			if (canAdvanceServerGame(gameId, reconnectEvent)) {
+				advanceServerGame(gameId, reconnectEvent);
+				emitAll(reconnectEvent);
+			}
 		}
 
 		// sync current state of the game with just connected player
@@ -347,6 +365,17 @@ export function setupWsServer(httpServer: HttpServer) {
 					} else {
 						emitAll(leftEvent);
 					}
+				} else {
+					// player cannot "leave" since game has alrady started
+					// but we should inform other players that they disconnected
+					const disconnectEvent: PlayerDisconnectEvent = {
+						type: 'disconnect',
+						data: playerId,
+					};
+					if (canAdvanceServerGame(gameId, disconnectEvent)) {
+						advanceServerGame(gameId, disconnectEvent);
+						emitAll(disconnectEvent);
+					}
 				}
 			}
 		});
@@ -387,14 +416,6 @@ export function setupWsServer(httpServer: HttpServer) {
 					data: gameEventsToEmit,
 				};
 				emitAll(batchEvent);
-			}
-		});
-
-		// just some testing stuff
-		socket.emit('message', 'Hello from server!');
-		socket.on('message', (message) => {
-			if (message === 'PING') {
-				socket.emit('message', 'PONG');
 			}
 		});
 	});

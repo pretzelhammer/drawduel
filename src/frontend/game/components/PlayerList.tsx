@@ -1,6 +1,6 @@
 import { type FunctionalComponent } from 'preact';
 import { useClientContext } from 'src/frontend/game/ClientContextProvider.tsx';
-import { GamePlayer, TeamPlayerRole } from 'src/agnostic/gameState.ts';
+import { GamePlayer, PlayerRole } from 'src/agnostic/gameState.ts';
 
 export const PlayerList: FunctionalComponent = () => {
 	const { clientContext } = useClientContext();
@@ -11,9 +11,12 @@ export const PlayerList: FunctionalComponent = () => {
 		if (player.id == myId) {
 			name += ' (you)';
 		}
-		return name;
+		if (!player.connected) {
+			return <span style="opacity: 0.5;">{name}</span>;
+		}
+		return <span>{name}</span>;
 	}
-	function playerRole(player: GamePlayer): TeamPlayerRole {
+	function playerRole(player: GamePlayer): PlayerRole {
 		return clientContext.gameState.teams[player.team].players[player.id].role;
 	}
 	function teamScore(player: GamePlayer): number {

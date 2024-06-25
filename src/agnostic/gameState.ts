@@ -1,8 +1,10 @@
-import { Maybe } from 'src/agnostic/types';
+import { Maybe } from 'src/agnostic/types.ts';
+import { randomShortId } from 'src/agnostic/random.ts';
 
 export type PlayerId = string;
 export type GameId = string;
 export type TeamId = string;
+export type RoundId = string;
 export type GamePhase = 'pre-game' | 'rounds' | 'post-game';
 
 /**
@@ -11,9 +13,18 @@ export type GamePhase = 'pre-game' | 'rounds' | 'post-game';
  */
 export interface GameState {
 	id: GameId;
+	nextId: GameId;
 	phase: GamePhase;
 	teams: GameTeams;
 	players: GamePlayers;
+	roundsMeta: RoundsMeta;
+}
+
+export interface RoundsMeta {
+	nextRoundStartsAt: number;
+	pickWordEndsAt: number;
+	playingEndsAt: number;
+	currentRound: RoundId;
 }
 
 export interface GameTeams {
@@ -30,10 +41,10 @@ export interface TeamPlayers {
 }
 
 export interface TeamPlayer {
-	role: TeamPlayerRole;
+	role: PlayerRole;
 }
 
-export type TeamPlayerRole = 'drawer' | 'guesser' | 'spectator';
+export type PlayerRole = 'drawer' | 'guesser' | 'spectator';
 
 export interface GamePlayers {
 	[key: PlayerId]: GamePlayer;
@@ -45,6 +56,8 @@ export interface GamePlayer {
 	score: number;
 	team: TeamId;
 	ready: boolean;
+	connected: boolean;
+	role: PlayerRole;
 }
 
 /**
@@ -113,6 +126,16 @@ export interface PlayerReadyEvent {
 	data: PlayerId;
 }
 
+export interface PlayerReconnectEvent {
+	type: 'reconnect';
+	data: PlayerId;
+}
+
+export interface PlayerDisconnectEvent {
+	type: 'disconnect';
+	data: PlayerId;
+}
+
 /**
  * union type representing all possible types
  * of game events
@@ -124,14 +147,23 @@ export type GameEvent =
 	| IncPlayerScoreEvent
 	| ChangePlayerNameEvent
 	| ChangeGamePhaseEvent
+	| PlayerReconnectEvent
+	| PlayerDisconnectEvent
 	| PlayerReadyEvent;
 
 export function initGameState(gameId: GameId): GameState {
 	return {
 		id: gameId,
+		nextId: randomShortId(),
 		phase: 'pre-game',
 		players: {},
 		teams: {},
+		roundsMeta: {
+			nextRoundStartsAt: 0,
+			pickWordEndsAt: 0,
+			playingEndsAt: 0,
+			currentRound: '0',
+		},
 	};
 }
 
@@ -170,6 +202,14 @@ export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean 
 		// player exists and isn't already ready
 		const player: Maybe<GamePlayer> = gameState.players[gameEvent.data];
 		return player && !player.ready;
+	} else if (gameEvent.type === 'reconnect') {
+		// player exists and is disconnected
+		const player: Maybe<GamePlayer> = gameState.players[gameEvent.data];
+		return player && !player.connected;
+	} else if (gameEvent.type === 'disconnect') {
+		// player exists and is connected
+		const player: Maybe<GamePlayer> = gameState.players[gameEvent.data];
+		return player && player.connected;
 	}
 	return true;
 }
@@ -184,6 +224,8 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 			...gameEvent.data,
 			score: 0,
 			ready: false,
+			connected: true,
+			role: 'guesser',
 		};
 		const team: GameTeam = gameState.teams[gameEvent.data.team] || {
 			players: {},
@@ -239,6 +281,10 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 		gameState.teams[newTeamId] = newTeam;
 	} else if (gameEvent.type === 'ready') {
 		gameState.players[gameEvent.data].ready = true;
+	} else if (gameEvent.type === 'reconnect') {
+		gameState.players[gameEvent.data].connected = true;
+	} else if (gameEvent.type === 'disconnect') {
+		gameState.players[gameEvent.data].connected = false;
 	}
 	return gameState;
 }
