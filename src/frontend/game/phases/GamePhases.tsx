@@ -1,9 +1,9 @@
 import { type FunctionalComponent } from 'preact';
-import { useClientContext } from 'src/frontend/game/ClientContextProvider.tsx';
+import { useClientContext } from 'src/frontend/game/context/ClientContextProvider.tsx';
 import { PreGamePhase } from 'src/frontend/game/phases/PreGamePhase.tsx';
 import { RoundsPhase } from 'src/frontend/game/phases/RoundsPhase.tsx';
 import { PostGamePhase } from 'src/frontend/game/phases/PostGamePhase.tsx';
-import { LightningRoundPhase } from './LightningRoundPhase';
+import { LightningRoundPhase } from 'src/frontend/game/phases/LightningRoundPhase.tsx';
 
 export const GamePhases: FunctionalComponent = () => {
 	const { clientContext } = useClientContext();

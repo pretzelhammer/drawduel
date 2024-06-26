@@ -1,5 +1,5 @@
 import { type FunctionalComponent } from 'preact';
-import { useClientContext } from 'src/frontend/game/ClientContextProvider.tsx';
+import { useClientContext } from 'src/frontend/game/context/ClientContextProvider.tsx';
 
 export const PrintClientContext: FunctionalComponent = () => {
 	let { clientContext } = useClientContext();

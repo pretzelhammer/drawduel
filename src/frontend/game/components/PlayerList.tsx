@@ -1,6 +1,6 @@
 import { type FunctionalComponent } from 'preact';
-import { useClientContext } from 'src/frontend/game/ClientContextProvider.tsx';
-import { GamePlayer, PlayerRole } from 'src/agnostic/gameState.ts';
+import { useClientContext } from 'src/frontend/game/context/ClientContextProvider.tsx';
+import { type GamePlayer, type PlayerRole } from 'src/agnostic/gameState.ts';
 
 export const PlayerList: FunctionalComponent = () => {
 	const { clientContext } = useClientContext();

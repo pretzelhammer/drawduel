@@ -11,7 +11,7 @@ import {
 	hasSideEffect,
 	performSideEffect,
 	canOptimisticallyRender,
-} from 'src/frontend/game/clientContext.ts';
+} from 'src/frontend/game/context/clientContext.ts';
 import { connect } from 'src/frontend/game/utils/sockets.ts';
 import { Maybe } from 'src/agnostic/types.ts';
 
