@@ -223,7 +223,7 @@ function nextRoundEvents(serverGameContext: ServerGameContext): GameEvent[] {
 	// intro phase should only last 3s
 	nextRoundEvents.push({
 		type: 'timer',
-		data: secondsFromNow(3),
+		data: secondsFromNow(15), // TODO: change back to 3 later
 	});
 	return nextRoundEvents;
 }

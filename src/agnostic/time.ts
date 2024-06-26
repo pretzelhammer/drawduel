@@ -11,8 +11,12 @@ export function secondsFromNow(seconds: Second): UnixMs {
 	return now() + secondsToMs(seconds);
 }
 
+export function msToSeconds(ms: Ms): Second {
+	return ms / 1_000;
+}
+
 export function secondsUntil(future: UnixMs): Second {
-	return secondsToMs(future - now());
+	return msToSeconds(future - now());
 }
 
 export function secondsToMs(seconds: Second): Ms {
