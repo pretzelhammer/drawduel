@@ -224,7 +224,7 @@ function nextRoundEvents(serverGameContext: ServerGameContext, emitAll: (event: 
 	};
 	nextRoundEvents.push(newRound);
 	// intro phase should only last 3s
-	const endsAt = secondsFromNow(15); // TODO: change back to 3 later
+	const endsAt = secondsFromNow(3); // TODO: change back to 3 later
 	nextRoundEvents.push({
 		type: 'timer',
 		data: endsAt,
@@ -301,7 +301,7 @@ function generateResponse(
 			responseEvents.push(...nextPhaseEvents(serverGameContext, emitAll));
 		} else {
 			// auto-start next phase without waiting for all players to ready
-			const timeoutDuration = secondsToMs(unreadyConnectedPlayers * 15); // change to 5-10 later
+			const timeoutDuration = secondsToMs(unreadyConnectedPlayers * 10); // change to 5-10 later
 			const endsAt = now() + timeoutDuration;
 			serverGameContext.serverState.timerId = setTimeout(() => {
 				const phaseEvents = nextPhaseEvents(serverGameContext, emitAll);
