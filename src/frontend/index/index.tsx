@@ -10,6 +10,9 @@ if (import.meta.env.DEV) {
 	if (window.location.pathname === '/game') {
 		window.location.pathname = '/game/';
 	}
+	if (window.location.pathname === '/development') {
+		window.location.pathname = '/development/';
+	}
 }
 
 render(<IndexApp />, document.getElementById('index-app')!);
