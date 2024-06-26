@@ -13,8 +13,8 @@ export const RoundsPhase: FunctionalComponent = () => {
 		<>
 			<h1>draw duel 🎨⚔️</h1>
 			<h2>round page</h2>
-			<h3>current round: {clientContext.gameState.round}</h3>
-			<h3>current round phase: {currentRoundPhase}</h3>
+			<h3>round: {clientContext.gameState.round + 1}</h3>
+			<h3>round phase: {currentRoundPhase}</h3>
 			<PlayerList />
 			<IncreaseMyScore />
 			<ChangeName />

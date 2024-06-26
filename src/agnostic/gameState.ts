@@ -1,13 +1,13 @@
 import { Maybe } from 'src/agnostic/types.ts';
-import { randomShortId } from 'src/agnostic/random.ts';
+import { randomEasyWord, randomHardWord, randomShortId } from 'src/agnostic/random.ts';
 
 export type PlayerId = string;
 export type GameId = string;
 export type TeamId = string;
 
-// 0 = rounds haven't started
-// 1 - 15 = regular round
-export type RoundId = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
+// -1 = rounds haven't started
+// 1 - 14 = regular round
+export type RoundId = -1 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
 export type GamePhase = 'pre-game' | 'rounds' | 'lightning-round' | 'post-game';
 
 /**
@@ -20,7 +20,12 @@ export interface GameState {
 	phase: GamePhase;
 	teams: GameTeams;
 	players: GamePlayers;
-	timer: number;
+	// if timer = 0 it means there is no timer,
+	// otherwise it should also be a unix timestamp
+	// in milliseconds in the future, and is the point
+	// in time that the current phase ends and the next
+	// phase will begin
+	timer: UnixMs;
 	round: RoundId;
 	rounds: Rounds;
 	lightningRound: LightningRound;
@@ -42,8 +47,8 @@ export interface RoundTeams {
 }
 
 export interface RoundTeam {
-	drawing: string; // TODO make array of draw events
-	guesses: string; // TODO make array of guess events
+	drawing: string[]; // TODO make array of draw events
+	guesses: string[]; // TODO make array of guess events
 }
 
 export interface WordChoices {
@@ -78,9 +83,7 @@ export interface TeamPlayers {
 	[key: PlayerId]: TeamPlayer;
 }
 
-export interface TeamPlayer {
-	role: PlayerRole;
-}
+export interface TeamPlayer {}
 
 export type PlayerRole = 'drawer' | 'guesser' | 'spectator';
 
@@ -159,19 +162,50 @@ export interface ChangeGamePhaseEvent {
 	data: GamePhase;
 }
 
+/**
+ * player readied
+ */
 export interface PlayerReadyEvent {
 	type: 'ready';
 	data: PlayerId;
 }
 
+/**
+ * player reconnected after disconnecting
+ */
 export interface PlayerReconnectEvent {
 	type: 'reconnect';
 	data: PlayerId;
 }
 
+/**
+ * player disconnected
+ */
 export interface PlayerDisconnectEvent {
 	type: 'disconnect';
 	data: PlayerId;
+}
+
+export type UnixMs = number;
+
+/**
+ * sets timer
+ */
+export interface TimerEvent {
+	type: 'timer';
+	data: UnixMs;
+}
+
+/**
+ * creates a new round
+ */
+export interface NewRoundEvent {
+	type: 'new-round';
+	data: {
+		drawers: PlayerId[];
+		chooser: PlayerId;
+		choices: WordChoices;
+	};
 }
 
 /**
@@ -187,6 +221,8 @@ export type GameEvent =
 	| ChangeGamePhaseEvent
 	| PlayerReconnectEvent
 	| PlayerDisconnectEvent
+	| TimerEvent
+	| NewRoundEvent
 	| PlayerReadyEvent;
 
 export function initGameState(gameId: GameId): GameState {
@@ -197,11 +233,32 @@ export function initGameState(gameId: GameId): GameState {
 		players: {},
 		teams: {},
 		timer: 0,
-		round: 0,
+		round: -1,
 		rounds: [],
 		lightningRound: {
 			phase: 'intro',
 		},
+	};
+}
+
+export function generateRound(teamIds: TeamId[], drawers: PlayerId[], chooser: PlayerId, choices: WordChoices): Round {
+	const roundTeams: RoundTeams = {};
+	for (let teamId of teamIds) {
+		roundTeams[teamId] = {
+			drawing: [],
+			guesses: [],
+		};
+	}
+	return {
+		phase: 'intro',
+		drawers,
+		chooser,
+		choices,
+		word: {
+			content: choices.easy,
+			difficulty: 'easy',
+		},
+		teams: roundTeams,
 	};
 }
 
@@ -261,6 +318,12 @@ export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean 
 		// player exists and is connected
 		const player: Maybe<GamePlayer> = gameState.players[gameEvent.data];
 		return player && player.connected;
+	} else if (gameEvent.type === 'timer') {
+		// timer can always be set
+		return true;
+	} else if (gameEvent.type === 'new-round') {
+		// game has a max of 15 regular rounds
+		return gameState.round < 14;
 	}
 	return true;
 }
@@ -282,9 +345,7 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 			players: {},
 			score: 0,
 		};
-		team.players[gameEvent.data.id] = {
-			role: 'guesser',
-		};
+		team.players[gameEvent.data.id] = {};
 		gameState.teams[gameEvent.data.team] = team;
 	} else if (gameEvent.type === 'left') {
 		let player: GamePlayer = gameState.players[gameEvent.data];
@@ -304,7 +365,16 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 	} else if (gameEvent.type === 'change-player-name') {
 		gameState.players[gameEvent.data.id].name = gameEvent.data.name;
 	} else if (gameEvent.type === 'change-game-phase') {
+		// change game phase
 		gameState.phase = gameEvent.data;
+		// changing game phase also always resets players ready
+		// flags, their roles, and resets the timer
+		const players = Object.values(gameState.players);
+		for (let player of players) {
+			player.ready = false;
+			player.role = 'guesser';
+		}
+		gameState.timer = 0;
 	} else if (gameEvent.type === 'join-team') {
 		const playerId = gameEvent.data.id;
 		const newTeamId = gameEvent.data.team;
@@ -326,9 +396,7 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 			players: {},
 			score: 0,
 		};
-		newTeam.players[playerId] = {
-			role: 'guesser',
-		};
+		newTeam.players[playerId] = {};
 		gameState.teams[newTeamId] = newTeam;
 	} else if (gameEvent.type === 'ready') {
 		gameState.players[gameEvent.data].ready = true;
@@ -336,6 +404,58 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 		gameState.players[gameEvent.data].connected = true;
 	} else if (gameEvent.type === 'disconnect') {
 		gameState.players[gameEvent.data].connected = false;
+	} else if (gameEvent.type === 'timer') {
+		gameState.timer = gameEvent.data;
+	} else if (gameEvent.type === 'new-round') {
+		// generate & push new round
+		const teamIds = Object.keys(gameState.teams);
+		gameState.rounds.push(
+			generateRound(teamIds, gameEvent.data.drawers, gameEvent.data.chooser, gameEvent.data.choices),
+		);
+		// update round id
+		gameState.round += 1;
+		const players = Object.values(gameState.players);
+		for (let player of players) {
+			// reset ready flags
+			player.ready = false;
+			if (gameEvent.data.drawers.includes(player.id)) {
+				player.role = 'drawer';
+			} else {
+				// reset role back to default
+				player.role = 'guesser';
+			}
+		}
+		// reset timer
+		gameState.timer = 0;
 	}
 	return gameState;
+}
+
+export function nextGamePhase(gamePhase: GamePhase): GamePhase {
+	switch (gamePhase) {
+		case 'pre-game':
+			return 'rounds';
+		case 'rounds':
+			return 'lightning-round';
+		case 'lightning-round':
+			return 'post-game';
+		case 'post-game':
+			throw new Error(`cannot advance past post-game phase`);
+	}
+}
+
+export function nextRoundPhase(roundPhase: RoundPhaseType): RoundPhaseType {
+	// round phases cycle, so post-round goes back to intro
+	switch (roundPhase) {
+		case 'intro':
+			return 'pick-word';
+		case 'pick-word':
+			return 'pre-play';
+		case 'pre-play':
+			return 'play';
+		case 'play':
+			return 'post-round';
+		case 'post-round':
+			return 'intro';
+	}
 }

@@ -22,7 +22,7 @@ export const PlayerList: FunctionalComponent = () => {
 		return <span class={nameClasses.join(' ')}>{name}</span>;
 	}
 	function playerRole(player: GamePlayer): PlayerRole {
-		return clientContext.gameState.teams[player.team].players[player.id].role;
+		return player.role;
 	}
 	function teamScore(player: GamePlayer): number {
 		return clientContext.gameState.teams[player.team].score;

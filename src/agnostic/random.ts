@@ -2,16 +2,17 @@ import { adjectives } from 'src/agnostic/adjectives.ts';
 import { animals } from 'src/agnostic/animals.ts';
 import { easy, hard } from 'src/agnostic/words.ts';
 import { validName } from 'src/agnostic/validation.ts';
+import { WordChoices } from './gameState';
 
-function pickRandomChar(string: string): string {
+export function pickRandomChar(string: string): string {
 	return string[Math.floor(Math.random() * string.length)];
 }
 
-function pickRandomItem<T>(array: T[]): T {
+export function pickRandomItem<T>(array: T[]): T {
 	return array[Math.floor(Math.random() * array.length)];
 }
 
-function pickRandomNum(min: number, max: number): number {
+export function pickRandomNum(min: number, max: number): number {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
@@ -63,4 +64,11 @@ export function randomEasyWord(): string {
 
 export function randomHardWord(): string {
 	return pickRandomItem(hard);
+}
+
+export function randomWordChoices(): WordChoices {
+	return {
+		easy: randomEasyWord(),
+		hard: randomHardWord(),
+	};
 }

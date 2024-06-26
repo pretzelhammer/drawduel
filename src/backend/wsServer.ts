@@ -16,10 +16,12 @@ import {
 	JoinEvent,
 	JoinTeamEvent,
 	LeftEvent,
+	NewRoundEvent,
 	PlayerDisconnectEvent,
 	PlayerReconnectEvent,
 	advance,
 	canAdvance,
+	nextGamePhase,
 	type GameId,
 	type PlayerId,
 	type TeamId,
@@ -27,6 +29,8 @@ import {
 import { type ServerEvent, type ClientError, ClientEvent, BatchEvent } from 'src/agnostic/events.ts';
 import { validGameId, validName, validPass, validPlayerId } from 'src/agnostic/validation';
 import { Maybe } from 'src/agnostic/types';
+import { pickRandomItem, randomWordChoices } from 'src/agnostic/random';
+import { secondsFromNow } from 'src/agnostic/time';
 
 const wsOptions: Partial<ServerOptions> = {};
 
@@ -176,6 +180,12 @@ function hasPermission(playerId: PlayerId, gameId: GameId, gameEvent: GameEvent)
 	} else if (gameEvent.type === 'disconnect') {
 		// only server can issue this event
 		return false;
+	} else if (gameEvent.type === 'timer') {
+		// only server can issue this event
+		return false;
+	} else if (gameEvent.type === 'new-round') {
+		// only server can issue this event
+		return false;
 	}
 	return true;
 }
@@ -194,6 +204,101 @@ function advanceServerGame(gameId: GameId, gameEvent: GameEvent) {
 	const currentGameState = serverContext[gameId].gameState;
 	const nextGameState = advance(currentGameState, gameEvent);
 	serverContext[gameId].gameState = nextGameState;
+}
+
+function nextRoundEvents(serverGameContext: ServerGameContext): GameEvent[] {
+	const nextRoundEvents: GameEvent[] = [];
+	const drawers = selectDrawersForRound(serverGameContext);
+	const chooser = pickRandomItem(drawers);
+	const choices = randomWordChoices();
+	const newRound: NewRoundEvent = {
+		type: 'new-round',
+		data: {
+			drawers,
+			chooser,
+			choices,
+		},
+	};
+	nextRoundEvents.push(newRound);
+	// intro phase should only last 3s
+	nextRoundEvents.push({
+		type: 'timer',
+		data: secondsFromNow(3),
+	});
+	return nextRoundEvents;
+}
+
+/**
+ * true if the game event causes the server to generate
+ * additional game events, called response events
+ * example: when a player readies, the server needs to set
+ * and emit a timer update, and when the timer expires
+ * or all players ready then game phase advances
+ */
+function hasResponse(gameEvent: GameEvent): boolean {
+	return gameEvent.type === 'ready';
+}
+
+/**
+ * performing the side effect can produce additional game events
+ * to emit to all client in the game, the serverGameContext
+ * this function receives is already AFTER the given gameEvent
+ * has been applied
+ */
+function generateResponse(serverGameContext: ServerGameContext, gameEvent: GameEvent): GameEvent[] {
+	const responseEvents: GameEvent[] = [];
+	if (gameEvent.type === 'ready') {
+		const players = Object.values(serverGameContext.gameState.players);
+		let unreadyConnectedPlayers = 0;
+		for (let player of players) {
+			if (!player.ready && player.connected) {
+				unreadyConnectedPlayers += 1;
+			}
+		}
+		if (unreadyConnectedPlayers === 0) {
+			const gameState = serverGameContext.gameState;
+			const currentPhase = gameState.phase;
+			const currentRoundId = gameState.round;
+			if (currentPhase === 'pre-game') {
+				responseEvents.push({
+					type: 'change-game-phase',
+					data: nextGamePhase(serverGameContext.gameState.phase),
+				});
+				// create first round
+				responseEvents.push(...nextRoundEvents(serverGameContext));
+			} else if (currentPhase === 'rounds' && currentRoundId < 14) {
+				// create next round
+				responseEvents.push(...nextRoundEvents(serverGameContext));
+			} else {
+				responseEvents.push({
+					type: 'change-game-phase',
+					data: nextGamePhase(serverGameContext.gameState.phase),
+				});
+			}
+		}
+	}
+	return responseEvents;
+}
+
+function selectDrawersForRound(serverGameContext: ServerGameContext): PlayerId[] {
+	const drawers = [];
+	const teams = Object.values(serverGameContext.gameState.teams);
+	for (let team of teams) {
+		const playerIds = Object.keys(team.players);
+		const eligiblePlayerIds: PlayerId[] = [];
+		for (let playerId of playerIds) {
+			const player = serverGameContext.gameState.players[playerId];
+			if (player.ready && player.connected) {
+				eligiblePlayerIds.push(playerId);
+			}
+		}
+		if (eligiblePlayerIds.length >= 1) {
+			drawers.push(pickRandomItem(eligiblePlayerIds));
+		} else {
+			drawers.push(pickRandomItem(playerIds));
+		}
+	}
+	return drawers;
 }
 
 interface HandshakeQuery {
@@ -407,12 +512,14 @@ export function setupWsServer(httpServer: HttpServer) {
 				if (hasPermission(playerId, gameId, gameEvent) && canAdvanceServerGame(gameId, gameEvent)) {
 					advanceServerGame(gameId, gameEvent);
 					gameEventsToEmit.push(gameEvent);
-					// this particular event has a small server side effect, hopefully
-					// this is the only one that needs to do this, otherwise we need
-					// to refactor the code below to make it more obvious that server
-					// side effects can happen as a result of game events
-					if (gameEvent.type === 'change-player-name' && gameEvent.data.id === playerId) {
-						name = gameEvent.data.name;
+					if (hasResponse(gameEvent)) {
+						let responseEvents = generateResponse(serverGameContext, gameEvent);
+						for (let responseEvent of responseEvents) {
+							if (canAdvanceServerGame(gameId, responseEvent)) {
+								advanceServerGame(gameId, responseEvent);
+								gameEventsToEmit.push(responseEvent);
+							}
+						}
 					}
 				} else {
 					log(`player ${playerId} in game ${gameId} sent weird event`, gameEvent);
