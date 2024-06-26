@@ -46,6 +46,8 @@ export function dummyClientState(): ClientState {
 	return {
 		player: dummyPlayerState(),
 		route: Route.Lobby,
+		clientErrors: [],
+		serverErrors: [],
 	};
 }
 

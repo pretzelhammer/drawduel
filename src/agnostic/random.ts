@@ -1,5 +1,6 @@
-import ADJECTIVES from 'src/agnostic/adjectives.ts';
-import ANIMALS from 'src/agnostic/animals.ts';
+import { adjectives } from 'src/agnostic/adjectives.ts';
+import { animals } from 'src/agnostic/animals.ts';
+import { easy, hard } from 'src/agnostic/words.ts';
 import { validName } from 'src/agnostic/validation.ts';
 
 function pickRandomChar(string: string): string {
@@ -49,9 +50,17 @@ export function randomLongId(): string {
 // properties:
 // - adjective + animal + 2 digit number
 export function randomPlayerName(): string {
-	let tryName = pickRandomItem(ADJECTIVES) + pickRandomItem(ANIMALS) + pickRandomNum(11, 99);
+	let tryName = pickRandomItem(adjectives) + pickRandomItem(animals) + pickRandomNum(11, 99);
 	while (!validName(tryName)) {
-		tryName = pickRandomItem(ADJECTIVES) + pickRandomItem(ANIMALS) + pickRandomNum(11, 99);
+		tryName = pickRandomItem(adjectives) + pickRandomItem(animals) + pickRandomNum(11, 99);
 	}
 	return tryName;
+}
+
+export function randomEasyWord(): string {
+	return pickRandomItem(easy);
+}
+
+export function randomHardWord(): string {
+	return pickRandomItem(hard);
 }

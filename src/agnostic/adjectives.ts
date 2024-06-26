@@ -1,4 +1,4 @@
-export default [
+export const adjectives = [
 	'Graceful',
 	'Accurate',
 	'Wobbly',
