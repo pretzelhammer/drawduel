@@ -1,6 +1,6 @@
 import { type FunctionalComponent } from 'preact';
 import { useRef, useState } from 'preact/hooks';
-import { Canvas } from 'src/frontend/components/Canvas.tsx';
+import { Canvas, CanvasMode, DrawData, PreviewMode } from 'src/frontend/components/Canvas.tsx';
 import classes from 'src/frontend/components/DrawStage.module.css';
 import { LineInput } from 'src/frontend/components/LineInput.tsx';
 
@@ -46,10 +46,11 @@ export enum Mode {
 
 export interface DrawStageProps {
 	readonly mode: Mode;
+	readonly onDraw: (drawData: DrawData) => void;
 	readonly onGuess: (guess: string) => void;
 }
 
-export const DrawStage: FunctionalComponent<DrawStageProps> = ({ mode, onGuess }) => {
+export const DrawStage: FunctionalComponent<DrawStageProps> = ({ mode, onDraw, onGuess }) => {
 	const [guess, setGuess] = useState('');
 	const ref = useRef<HTMLCanvasElement | null>(null);
 	const [brushSettings, setBrushSettings] = useState({
@@ -145,11 +146,15 @@ export const DrawStage: FunctionalComponent<DrawStageProps> = ({ mode, onGuess }
 	return (
 		<div className={classes['stage']}>
 			<Canvas
-				brushSettings={{
-					...brushSettings,
-					color: brushSettings.tool === Tool.Eraser ? 'white' : brushSettings.color,
+				mode={{
+					name: CanvasMode.Draw,
+					brushSettings: {
+						...brushSettings,
+						color: brushSettings.tool === Tool.Eraser ? 'white' : brushSettings.color,
+					},
+					canvasDimensions,
+					onDraw,
 				}}
-				canvasDimensions={canvasDimensions}
 				ref={ref}
 			/>
 			{mode === Mode.Draw ? DrawSideBar : GuessSideBar}
