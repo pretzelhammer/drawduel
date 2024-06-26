@@ -239,7 +239,20 @@ export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean 
 	} else if (gameEvent.type === 'ready') {
 		// player exists and isn't already ready
 		const player: Maybe<GamePlayer> = gameState.players[gameEvent.data];
-		return player && !player.ready;
+		if (player && player.ready) {
+			return false;
+		}
+		// also, can only ready during pre-game phase or rounds.post-round phase
+		if (gameState.phase === 'pre-game') {
+			return true;
+		}
+		if (gameState.phase === 'rounds') {
+			let roundPhase = gameState.rounds[gameState.round].phase;
+			if (roundPhase === 'post-round') {
+				return true;
+			}
+		}
+		return false;
 	} else if (gameEvent.type === 'reconnect') {
 		// player exists and is disconnected
 		const player: Maybe<GamePlayer> = gameState.players[gameEvent.data];
