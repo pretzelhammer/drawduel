@@ -16,6 +16,7 @@ export interface ServerGameContext {
 
 export interface ServerState {
 	players: ServerPlayersState;
+	timerId: NodeJS.Timeout;
 }
 
 export interface ServerPlayersState {
@@ -31,6 +32,7 @@ export interface ServerPlayerState {
 export function initServerState(): ServerState {
 	return {
 		players: {},
+		timerId: setTimeout(() => {}, 0),
 	};
 }
 

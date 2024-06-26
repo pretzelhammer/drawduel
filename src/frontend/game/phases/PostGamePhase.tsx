@@ -7,7 +7,6 @@ import { PrintClientContext } from 'src/frontend/game/components/PrintClientCont
 export const PostGamePhase: FunctionalComponent = () => {
 	return (
 		<>
-			<h1>draw duel 🎨⚔️</h1>
 			<h2>post-game page</h2>
 			<PlayerList />
 			<IncreaseMyScore />

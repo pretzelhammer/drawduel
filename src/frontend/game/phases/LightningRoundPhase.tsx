@@ -9,7 +9,6 @@ export const LightningRoundPhase: FunctionalComponent = () => {
 	const { clientContext, setClientState } = useClientContext();
 	return (
 		<>
-			<h1>draw duel 🎨⚔️</h1>
 			<h2>lightning round page</h2>
 			<h3>lightning round phase: {clientContext.gameState.lightningRound.phase}</h3>
 			<PlayerList />

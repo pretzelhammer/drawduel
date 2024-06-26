@@ -158,8 +158,13 @@ export interface ChangePlayerNameEvent {
  * changes phase of the game
  */
 export interface ChangeGamePhaseEvent {
-	type: 'change-game-phase';
+	type: 'game-phase';
 	data: GamePhase;
+}
+
+export interface ChangeRoundPhaseEvent {
+	type: 'round-phase';
+	data: RoundPhaseType;
 }
 
 /**
@@ -219,6 +224,7 @@ export type GameEvent =
 	| IncPlayerScoreEvent
 	| ChangePlayerNameEvent
 	| ChangeGamePhaseEvent
+	| ChangeRoundPhaseEvent
 	| PlayerReconnectEvent
 	| PlayerDisconnectEvent
 	| TimerEvent
@@ -286,7 +292,7 @@ export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean 
 		}
 		// and only if it isn't their name already
 		return player.name !== gameEvent.data.name;
-	} else if (gameEvent.type === 'change-game-phase') {
+	} else if (gameEvent.type === 'game-phase') {
 		return gameState.phase !== gameEvent.data;
 	} else if (gameEvent.type === 'join-team') {
 		// only if player exists and isn't already
@@ -324,6 +330,11 @@ export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean 
 	} else if (gameEvent.type === 'new-round') {
 		// game has a max of 15 regular rounds
 		return gameState.round < 14;
+	} else if (gameEvent.type === 'round-phase') {
+		if (gameState.round >= 0 && gameState.round <= 14) {
+			const currentPhase = gameState.rounds[gameState.round].phase;
+			return currentPhase !== gameEvent.data;
+		}
 	}
 	return true;
 }
@@ -364,7 +375,7 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 		gameState.teams[player.team].score += gameEvent.data.score;
 	} else if (gameEvent.type === 'change-player-name') {
 		gameState.players[gameEvent.data.id].name = gameEvent.data.name;
-	} else if (gameEvent.type === 'change-game-phase') {
+	} else if (gameEvent.type === 'game-phase') {
 		// change game phase
 		gameState.phase = gameEvent.data;
 		// changing game phase also always resets players ready
@@ -425,6 +436,12 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 				player.role = 'guesser';
 			}
 		}
+		// reset timer
+		gameState.timer = 0;
+	} else if (gameEvent.type === 'round-phase') {
+		// change round phase
+		const currentRound = gameState.rounds[gameState.round];
+		currentRound.phase = gameEvent.data;
 		// reset timer
 		gameState.timer = 0;
 	}

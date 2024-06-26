@@ -6,17 +6,18 @@ import { PrintClientContext } from 'src/frontend/game/components/PrintClientCont
 import { Ready } from 'src/frontend/game/components/Ready.tsx';
 import { ReadyCount } from 'src/frontend/game/components/ReadyCount.tsx';
 import { Round } from 'src/frontend/game/Round.tsx';
+import { Timer } from '../components/Timer';
 
 export const PreGamePhase: FunctionalComponent = () => {
 	return (
 		<>
-			<h1>draw duel 🎨⚔️</h1>
 			<h2>pre-game page</h2>
 			<PlayerList />
 			<IncreaseMyScore />
 			<ChangeName />
 			<Ready />
 			<ReadyCount />
+			<Timer />
 			<Round
 				teamName="team name"
 				teamPreviews={[

@@ -131,8 +131,7 @@ const ClientContextProvider: FunctionalComponent = ({ children }) => {
 
 	// render a specific client error, if we get it
 	const alreadyPlaying = clientContext.clientState.clientErrors.includes('already-playing');
-	// disable in dev because hot-reload triggers a lot of false negatives
-	if (alreadyPlaying && !import.meta.env.DEV) {
+	if (alreadyPlaying) {
 		content = <span>you are already playing this game in another browser window</span>;
 	}
 

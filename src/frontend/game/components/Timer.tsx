@@ -26,6 +26,8 @@ export const Timer: FunctionalComponent = () => {
 		return <span></span>;
 	}
 
-	const secondsLeftString = Math.round(secondsLeft).toString().padStart(2, '0');
-	return <span>0:{secondsLeftString}</span>;
+	const rounded = Math.round(secondsLeft);
+	const notBelowZero = rounded < 0 ? 0 : rounded;
+	const toDisplay = notBelowZero.toString().padStart(2, '0');
+	return <span>0:{toDisplay}</span>;
 };

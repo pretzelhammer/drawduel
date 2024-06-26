@@ -12,7 +12,6 @@ export const RoundsPhase: FunctionalComponent = () => {
 	const currentRoundPhase = clientContext.gameState.rounds[currentRound].phase;
 	return (
 		<>
-			<h1>draw duel 🎨⚔️</h1>
 			<h2>round page</h2>
 			<h3>round {clientContext.gameState.round + 1}</h3>
 			<h3>round phase {currentRoundPhase}</h3>

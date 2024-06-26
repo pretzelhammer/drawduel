@@ -30,7 +30,7 @@ import { type ServerEvent, type ClientError, ClientEvent, BatchEvent } from 'src
 import { validGameId, validName, validPass, validPlayerId } from 'src/agnostic/validation';
 import { Maybe } from 'src/agnostic/types';
 import { pickRandomItem, randomWordChoices } from 'src/agnostic/random';
-import { secondsFromNow } from 'src/agnostic/time';
+import { now, secondsFromNow, secondsToMs } from 'src/agnostic/time';
 
 const wsOptions: Partial<ServerOptions> = {};
 
@@ -160,7 +160,7 @@ function hasPermission(playerId: PlayerId, gameId: GameId, gameEvent: GameEvent)
 	} else if (gameEvent.type === 'change-player-name') {
 		// players can only change their own names
 		return playerId === gameEvent.data.id;
-	} else if (gameEvent.type === 'change-game-phase') {
+	} else if (gameEvent.type === 'game-phase') {
 		// players can never change the game phase,
 		// only the server can issue this game event
 		return false;
@@ -186,6 +186,9 @@ function hasPermission(playerId: PlayerId, gameId: GameId, gameEvent: GameEvent)
 	} else if (gameEvent.type === 'new-round') {
 		// only server can issue this event
 		return false;
+	} else if (gameEvent.type === 'round-phase') {
+		// only server can issue this event
+		return false;
 	}
 	return true;
 }
@@ -206,7 +209,7 @@ function advanceServerGame(gameId: GameId, gameEvent: GameEvent) {
 	serverContext[gameId].gameState = nextGameState;
 }
 
-function nextRoundEvents(serverGameContext: ServerGameContext): GameEvent[] {
+function nextRoundEvents(serverGameContext: ServerGameContext, emitAll: (event: ServerEvent) => void): GameEvent[] {
 	const nextRoundEvents: GameEvent[] = [];
 	const drawers = selectDrawersForRound(serverGameContext);
 	const chooser = pickRandomItem(drawers);
@@ -221,11 +224,42 @@ function nextRoundEvents(serverGameContext: ServerGameContext): GameEvent[] {
 	};
 	nextRoundEvents.push(newRound);
 	// intro phase should only last 3s
+	const endsAt = secondsFromNow(15); // TODO: change back to 3 later
 	nextRoundEvents.push({
 		type: 'timer',
-		data: secondsFromNow(15), // TODO: change back to 3 later
+		data: endsAt,
 	});
+	serverGameContext.serverState.timerId = setTimeout(() => {
+		emitAll({
+			type: 'round-phase',
+			data: 'pick-word',
+		});
+	}, endsAt - now());
 	return nextRoundEvents;
+}
+
+function nextPhaseEvents(serverGameContext: ServerGameContext, emitAll: (event: ServerEvent) => void): GameEvent[] {
+	const gameState = serverGameContext.gameState;
+	const currentPhase = gameState.phase;
+	const currentRoundId = gameState.round;
+	const nextPhaseEvents: GameEvent[] = [];
+	if (currentPhase === 'pre-game') {
+		nextPhaseEvents.push({
+			type: 'game-phase',
+			data: nextGamePhase(serverGameContext.gameState.phase),
+		});
+		// create first round
+		nextPhaseEvents.push(...nextRoundEvents(serverGameContext, emitAll));
+	} else if (currentPhase === 'rounds' && currentRoundId < 14) {
+		// create next round
+		nextPhaseEvents.push(...nextRoundEvents(serverGameContext, emitAll));
+	} else {
+		nextPhaseEvents.push({
+			type: 'game-phase',
+			data: nextGamePhase(serverGameContext.gameState.phase),
+		});
+	}
+	return nextPhaseEvents;
 }
 
 /**
@@ -240,12 +274,15 @@ function hasResponse(gameEvent: GameEvent): boolean {
 }
 
 /**
- * performing the side effect can produce additional game events
- * to emit to all client in the game, the serverGameContext
- * this function receives is already AFTER the given gameEvent
- * has been applied
+ * the serverGameContext this function receives is already AFTER the given gameEvent
+ * has been applied, also the generated response might include a timeout delay,
+ * which is why the emitAll function has to be passed
  */
-function generateResponse(serverGameContext: ServerGameContext, gameEvent: GameEvent): GameEvent[] {
+function generateResponse(
+	serverGameContext: ServerGameContext,
+	gameEvent: GameEvent,
+	emitAll: (event: ServerEvent) => void,
+): GameEvent[] {
 	const responseEvents: GameEvent[] = [];
 	if (gameEvent.type === 'ready') {
 		const players = Object.values(serverGameContext.gameState.players);
@@ -255,26 +292,42 @@ function generateResponse(serverGameContext: ServerGameContext, gameEvent: GameE
 				unreadyConnectedPlayers += 1;
 			}
 		}
+		// clear current timer because we're either about to
+		// immediately start the next game phase because all
+		// players are ready OR we're going to re-calculate
+		// the timer because new players have readied/disconnected
+		clearTimeout(serverGameContext.serverState.timerId);
 		if (unreadyConnectedPlayers === 0) {
-			const gameState = serverGameContext.gameState;
-			const currentPhase = gameState.phase;
-			const currentRoundId = gameState.round;
-			if (currentPhase === 'pre-game') {
-				responseEvents.push({
-					type: 'change-game-phase',
-					data: nextGamePhase(serverGameContext.gameState.phase),
-				});
-				// create first round
-				responseEvents.push(...nextRoundEvents(serverGameContext));
-			} else if (currentPhase === 'rounds' && currentRoundId < 14) {
-				// create next round
-				responseEvents.push(...nextRoundEvents(serverGameContext));
-			} else {
-				responseEvents.push({
-					type: 'change-game-phase',
-					data: nextGamePhase(serverGameContext.gameState.phase),
-				});
-			}
+			responseEvents.push(...nextPhaseEvents(serverGameContext, emitAll));
+		} else {
+			// auto-start next phase without waiting for all players to ready
+			const timeoutDuration = secondsToMs(unreadyConnectedPlayers * 15); // change to 5-10 later
+			const endsAt = now() + timeoutDuration;
+			serverGameContext.serverState.timerId = setTimeout(() => {
+				const phaseEvents = nextPhaseEvents(serverGameContext, emitAll);
+				const toEmit: GameEvent[] = [];
+				for (let phaseEvent of phaseEvents) {
+					if (canAdvanceServerGame(serverGameContext.gameState.id, phaseEvent)) {
+						advanceServerGame(serverGameContext.gameState.id, phaseEvent);
+						toEmit.push(phaseEvent);
+					}
+				}
+				if (toEmit.length > 0) {
+					if (toEmit.length === 1) {
+						emitAll(toEmit[0]);
+					} else {
+						emitAll({
+							type: 'batch',
+							data: toEmit,
+						});
+					}
+				}
+			}, timeoutDuration);
+			// notify players of auto-start timeout
+			responseEvents.push({
+				type: 'timer',
+				data: endsAt,
+			});
 		}
 	}
 	return responseEvents;
@@ -513,7 +566,7 @@ export function setupWsServer(httpServer: HttpServer) {
 					advanceServerGame(gameId, gameEvent);
 					gameEventsToEmit.push(gameEvent);
 					if (hasResponse(gameEvent)) {
-						let responseEvents = generateResponse(serverGameContext, gameEvent);
+						let responseEvents = generateResponse(serverGameContext, gameEvent, emitAll);
 						for (let responseEvent of responseEvents) {
 							if (canAdvanceServerGame(gameId, responseEvent)) {
 								advanceServerGame(gameId, responseEvent);
