@@ -40,13 +40,15 @@ src
 
 Frontend code is built using [vite](https://vitejs.dev/).
 
-There are two entry points: index & game.
+There are two production entry points: index & game. There is one development entry point: development.
 
-The index entry point is the main home page of the site. Its template is at `/index.html` and it loads `/src/frontend/index/index.tsx` which loads `/src/frontend/index/IndexApp.tsx` which renders the main home page. If you want to make changes to this page you'll likely put them in `IndexApp.tsx`. See this page on prod here https://drawduel.com.
+The index entry point is the main home page of the site. Its template is at `/index.html` and it loads `/src/frontend/index/index.tsx` which loads `/src/frontend/index/IndexApp.tsx` which renders the main home page. If you want to make changes to this page you'll likely put them in `IndexApp.tsx`. See this page on production here https://drawduel.com.
 
-The game entry point is the page of the site where actual draw duel games are played. Its template is at `/game/index.html` and it loads `/src/frontend/game/game.tsx` which loads `/src/frontend/game/GameApp.tsx` which renders the game page. If you want to make changes to this page you'll likely put them in `GameApp.tsx`. See this page on prod here https://drawduel.com/game/.
+The game entry point is the page of the site where actual draw duel games are played. Its template is at `/game/index.html` and it loads `/src/frontend/game/game.tsx` which loads `/src/frontend/game/GameApp.tsx` which renders the game page. If you want to make changes to this page you'll likely put them in `GameApp.tsx`. See this page on production here https://drawduel.com/game/.
 
-Global CSS should be put in `/src/frontend/global.css` which is imported by both entry points. To scope CSS to a specific component, put it in a `*.module.css` file and import it within that component, see `lineInput.tsx` and `LineInput.module.css` as an example.
+the development entry point, as the name suggests, only gets built in development. If you're working on code that might not be ready to go into the main game, but you'd like a place to test it, and also share it with other devs, you can put it in the development entry point. Its template is at `/development/index.html` and it loads `/src/frontend/development/development.tsx` which loads `/src/frontend/development/DevelopmentApp.tsx` which renders the development page. If you'd like to make changes to this page you'll likely put them in `DevelopmentApp.tsx`. See this page in development here http://localhost:8888/development/.
+
+Global CSS should be put in `/src/frontend/global.css` which is imported by all entry points. To scope CSS to a specific component, put it in a `*.module.css` file and import it within that component, see `lineInput.tsx` and `LineInput.module.css` as an example.
 
 _"There's no client-side routing library, should I add one?"_
 
@@ -226,6 +228,10 @@ You can create three "personas" to play the game with these urls, as an example:
 1.  http://localhost:8888/game/#test-chris
 
 The "personas" are managed entirely by the client and the server isn't aware of them. They also persist between games, although the only player-facing data within a "persona" is the player name.
+
+#### trying things out
+
+If you're doing exploratory coding to try out some ideas and you want to share those with other devs by pushing to `main` but don't want to affect the actual production site then add your code to the development entry point, i.e. `DevelopmentApp.tsx`.
 
 ### general Qs & As
 
