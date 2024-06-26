@@ -9,7 +9,8 @@ export type ClientError =
 	| 'invalid-pass'
 	| 'incorrect-pass'
 	| 'missing-name'
-	| 'invalid-name';
+	| 'invalid-name'
+	| 'already-playing';
 
 export interface ClientErrorEvent {
 	type: 'client-error';

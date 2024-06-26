@@ -62,13 +62,29 @@ const ClientContextProvider: FunctionalComponent = ({ children }) => {
 			clientContext.clientState.player.name,
 		);
 		socket.current.on('event', (event: ServerEvent) => {
-			console.log('GOT EVENT FROM SERVER:', event);
+			console.log('got event from server', event);
 			switch (event.type) {
 				case 'client-error':
-					console.error('got client errors:', event.data);
+					console.error('got client errors', event.data);
+					setClientContext((currentClientContext) => {
+						const clientState = currentClientContext.clientState;
+						clientState.clientErrors = event.data;
+						return {
+							...currentClientContext,
+							clientState,
+						};
+					});
 					break;
 				case 'server-error':
-					console.error('got server errors:', event.data);
+					console.error('got server errors', event.data);
+					setClientContext((currentClientContext) => {
+						const clientState = currentClientContext.clientState;
+						clientState.serverErrors = event.data;
+						return {
+							...currentClientContext,
+							clientState,
+						};
+					});
 					break;
 				case 'set-game-state':
 					// https://dmitripavlutin.com/react-hooks-stale-closures/
@@ -103,14 +119,25 @@ const ClientContextProvider: FunctionalComponent = ({ children }) => {
 		}));
 	};
 
-	// we know we've synced with the server when we can find our
-	// client player id in the game state
+	let content = children;
+
+	// we know we've synced with the server when we can find
+	// find our client player id in the game state
 	const myId = clientContext.clientState.player.id;
 	const syncedWithServer = !!clientContext.gameState.players[myId];
+	if (!syncedWithServer) {
+		content = <span>loading...</span>;
+	}
+
+	// render a specific client error, if we get it
+	const alreadyPlaying = clientContext.clientState.clientErrors.includes('already-playing');
+	if (alreadyPlaying) {
+		content = <span>you are already playing this game in another browser window</span>;
+	}
 
 	return (
 		<ClientContextKey.Provider value={{ clientContext, dispatchClientEvent, setClientState }}>
-			{syncedWithServer ? children : 'loading...'}
+			{content}
 		</ClientContextKey.Provider>
 	);
 };

@@ -265,6 +265,16 @@ export function setupWsServer(httpServer: HttpServer) {
 			log(`creating new game ${gameId}`);
 			// if not create new game
 			serverContext[gameId] = initServerGameContext(gameId);
+		} else {
+			// check if this client is already connected
+			// in another browser window
+			const player: Maybe<GamePlayer> = serverContext[gameId].gameState.players[playerId];
+			if (player && player.connected) {
+				clientErrors.push('already-playing');
+				emit({ type: 'client-error', data: clientErrors });
+				socket.disconnect(true);
+				return;
+			}
 		}
 
 		log(`player ${playerId} connected to game ${gameId}`);

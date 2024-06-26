@@ -3,7 +3,7 @@ import { randomLongId, randomPlayerName } from 'src/agnostic/random.ts';
 import { parseGameId, parsePlayerPersona } from 'src/frontend/game/utils/parsing.ts';
 import isObject from 'lodash-es/isObject';
 import isString from 'lodash-es/isString';
-import { ClientEvent } from 'src/agnostic/events';
+import { ClientError, ClientEvent, ServerError } from 'src/agnostic/events';
 
 export enum Route {
 	Lobby = 'ROUTE_LOBBY',
@@ -21,6 +21,8 @@ export interface ClientContext {
 export interface ClientState {
 	player: ClientPlayerState;
 	route: Route;
+	clientErrors: ClientError[];
+	serverErrors: ServerError[];
 }
 
 export interface ClientPlayerState {
@@ -67,6 +69,8 @@ function initClientState(): ClientState {
 	return {
 		player: initPlayerState(),
 		route: Route.Lobby,
+		clientErrors: [],
+		serverErrors: [],
 	};
 }
 
