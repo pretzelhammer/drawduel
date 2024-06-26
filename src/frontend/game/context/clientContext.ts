@@ -115,9 +115,13 @@ export function performSideEffect(clientContext: ClientContext, gameEvent: GameE
  * check if we can immediately advance our client game state
  * using this game event without having to wait for the response
  * from the server
+ * NOTE: the event should be idempotent, as after we perform it
+ * locally and send it to the server the server will still
+ * echo it back to us (we can probably optimize this away with
+ * more server checks)
  */
 export function canOptimisticallyRender(event: ClientEvent): boolean {
-	return event.type === 'change-player-name';
+	return event.type === 'change-player-name' || event.type === 'ready';
 }
 
 function fetchPersonas(): ClientPlayerPersonas {

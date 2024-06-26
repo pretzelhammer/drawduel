@@ -1,0 +1,7 @@
+.disconnected {
+	opacity: 0.5;
+}
+
+.ready {
+	color: var(--dark-blue);
+}

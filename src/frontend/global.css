@@ -10,8 +10,15 @@
 	font-weight: 400;
 	font-size: 16px;
 
-	color: #101010;
-	background-color: #fffad4;
+	--black: #101010;
+	--light-yellow: #fffad4;
+	--blue: #87e0ff;
+	--dark-blue: #2689ac;
+	--purple: #fac7ff;
+	--dark-purple: #ad55b6;
+
+	color: var(--black);
+	background-color: var(--light-yellow);
 
 	font-synthesis: none;
 	text-rendering: optimizeLegibility;
@@ -57,10 +64,10 @@ button {
 	font-size: 1em;
 	font-weight: 500;
 	font-family: inherit;
-	background-color: #87e0ff;
+	background-color: var(--blue);
 	cursor: pointer;
 	transition: background-color 0.25s;
-	box-shadow: -6px 6px #2689ac;
+	box-shadow: -6px 6px var(--dark-blue);
 	border: none;
 	text-decoration: none;
 	width: fit-content;
@@ -73,7 +80,7 @@ button.compact {
 
 .button:active:not(:disabled),
 button:active:not(:disabled) {
-	box-shadow: -3px 3px #2689ac;
+	box-shadow: -3px 3px var(--dark-blue);
 	transform: translate(-3px, 3px);
 }
 .button:focus-visible,
@@ -82,12 +89,12 @@ button:focus-visible {
 }
 
 .button--purple {
-	background-color: #fac7ff;
-	box-shadow: -6px 6px #ad55b6;
+	background-color: var(--purple);
+	box-shadow: -6px 6px var(--dark-purple);
 }
 .button:active.button--purple:not(:disabled),
 button:active.button--purple:not(:disabled) {
-	box-shadow: -3px 3px #ad55b6;
+	box-shadow: -3px 3px var(--dark-purple);
 }
 
 button:disabled,
