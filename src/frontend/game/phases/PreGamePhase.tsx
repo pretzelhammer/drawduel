@@ -5,7 +5,7 @@ import { ChangeName } from 'src/frontend/game/components/ChangeName.tsx';
 import { PrintClientContext } from 'src/frontend/game/components/PrintClientContext.tsx';
 import { Ready } from 'src/frontend/game/components/Ready.tsx';
 import { ReadyCount } from 'src/frontend/game/components/ReadyCount.tsx';
-import { Timer } from '../components/Timer';
+import { ContextualTimer } from 'src/frontend/game/components/ContextualTimer';
 
 export const PreGamePhase: FunctionalComponent = () => {
 	return (
@@ -14,7 +14,7 @@ export const PreGamePhase: FunctionalComponent = () => {
 			<PlayerList />
 			<Ready />
 			<ReadyCount />
-			<Timer />
+			<ContextualTimer />
 			<ChangeName />
 			<IncreaseMyScore />
 			<PrintClientContext />

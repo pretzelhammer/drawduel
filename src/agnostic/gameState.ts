@@ -61,9 +61,9 @@ export interface ChosenWord {
 	difficulty: string;
 }
 
-export type RoundPhaseType = 'intro' | 'pick-word' | 'pre-play' | 'play' | 'post-round';
+export type RoundPhaseType = 'pick-word' | 'pre-play' | 'play' | 'post-round';
 
-export type LightningRoundPhaseType = 'intro' | 'play' | 'post-round';
+export type LightningRoundPhaseType = 'pre-play' | 'play' | 'post-round';
 
 export interface LightningRound {
 	phase: LightningRoundPhaseType;
@@ -242,7 +242,7 @@ export function initGameState(gameId: GameId): GameState {
 		round: -1,
 		rounds: [],
 		lightningRound: {
-			phase: 'intro',
+			phase: 'pre-play',
 		},
 	};
 }
@@ -256,7 +256,7 @@ export function generateRound(teamIds: TeamId[], drawers: PlayerId[], chooser: P
 		};
 	}
 	return {
-		phase: 'intro',
+		phase: 'pick-word',
 		drawers,
 		chooser,
 		choices,
@@ -464,8 +464,6 @@ export function nextGamePhase(gamePhase: GamePhase): GamePhase {
 export function nextRoundPhase(roundPhase: RoundPhaseType): RoundPhaseType {
 	// round phases cycle, so post-round goes back to intro
 	switch (roundPhase) {
-		case 'intro':
-			return 'pick-word';
 		case 'pick-word':
 			return 'pre-play';
 		case 'pre-play':
@@ -473,6 +471,6 @@ export function nextRoundPhase(roundPhase: RoundPhaseType): RoundPhaseType {
 		case 'play':
 			return 'post-round';
 		case 'post-round':
-			return 'intro';
+			return 'pick-word';
 	}
 }

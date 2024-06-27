@@ -224,7 +224,7 @@ function nextRoundEvents(serverGameContext: ServerGameContext, emitAll: (event: 
 	};
 	nextRoundEvents.push(newRound);
 	// intro phase should only last 3s
-	const endsAt = secondsFromNow(3); // TODO: change back to 3 later
+	const endsAt = secondsFromNow(15); // TODO: change back to 3 later
 	nextRoundEvents.push({
 		type: 'timer',
 		data: endsAt,
@@ -232,7 +232,7 @@ function nextRoundEvents(serverGameContext: ServerGameContext, emitAll: (event: 
 	serverGameContext.serverState.timerId = setTimeout(() => {
 		emitAll({
 			type: 'round-phase',
-			data: 'pick-word',
+			data: 'pre-play',
 		});
 	}, endsAt - now());
 	return nextRoundEvents;

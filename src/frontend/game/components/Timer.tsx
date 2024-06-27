@@ -3,7 +3,11 @@ import { useState, useEffect } from 'preact/hooks';
 import { secondsUntil } from 'src/agnostic/time';
 import { useClientContext } from 'src/frontend/game/context/ClientContextProvider.tsx';
 
-export const Timer: FunctionalComponent = () => {
+export interface TimerProps {
+	message?: string;
+}
+
+export const Timer: FunctionalComponent<TimerProps> = ({ message }) => {
 	let { clientContext } = useClientContext();
 	const endsAt = clientContext.gameState.timer;
 	// 0 means no timer is active
@@ -29,5 +33,9 @@ export const Timer: FunctionalComponent = () => {
 	const rounded = Math.round(secondsLeft);
 	const notBelowZero = rounded < 0 ? 0 : rounded;
 	const toDisplay = notBelowZero.toString().padStart(2, '0');
-	return <span>0:{toDisplay}</span>;
+	return (
+		<span>
+			{message} 0:{toDisplay}
+		</span>
+	);
 };
