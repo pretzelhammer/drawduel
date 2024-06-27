@@ -1,4 +1,4 @@
-import { UnixMs } from './gameState';
+import { type UnixMs } from 'src/agnostic/gameState.ts';
 
 export type Second = number;
 export type Ms = number;

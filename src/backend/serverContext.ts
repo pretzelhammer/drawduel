@@ -1,4 +1,4 @@
-import { type GameState, type GameId, type PlayerId, initGameState, UnixMs } from 'src/agnostic/gameState.ts';
+import { type GameState, type GameId, type PlayerId, initGameState, type UnixMs } from 'src/agnostic/gameState.ts';
 
 // record of game ids to games
 export interface ServerContext {

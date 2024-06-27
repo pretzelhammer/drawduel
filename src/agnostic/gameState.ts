@@ -1,13 +1,14 @@
-import { Maybe } from 'src/agnostic/types.ts';
-import { randomEasyWord, randomHardWord, randomShortId } from 'src/agnostic/random.ts';
+import { type Maybe } from 'src/agnostic/types.ts';
+import { randomShortId } from 'src/agnostic/random.ts';
+import { HAS_LIGHTNING_ROUND, MAX_ROUND_ID } from 'src/agnostic/constants.ts';
 
 export type PlayerId = string;
 export type GameId = string;
 export type TeamId = string;
 
 // -1 = rounds haven't started
-// 1 - 14 = regular round
-export type RoundId = -1 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
+// 0+ = regular round
+export type RoundId = number;
 export type GamePhase = 'pre-game' | 'rounds' | 'lightning-round' | 'post-game';
 
 /**
@@ -328,10 +329,11 @@ export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean 
 		// timer can always be set
 		return true;
 	} else if (gameEvent.type === 'new-round') {
-		// game has a max of 15 regular rounds
-		return gameState.round < 14;
+		// check we're not creating a round past the
+		// max number of rounds
+		return gameState.round < MAX_ROUND_ID;
 	} else if (gameEvent.type === 'round-phase') {
-		if (gameState.round >= 0 && gameState.round <= 14) {
+		if (gameState.round >= 0 && gameState.round <= MAX_ROUND_ID) {
 			const currentPhase = gameState.rounds[gameState.round].phase;
 			return currentPhase !== gameEvent.data;
 		}
@@ -453,7 +455,10 @@ export function nextGamePhase(gamePhase: GamePhase): GamePhase {
 		case 'pre-game':
 			return 'rounds';
 		case 'rounds':
-			return 'lightning-round';
+			if (HAS_LIGHTNING_ROUND) {
+				return 'lightning-round';
+			}
+			return 'post-game';
 		case 'lightning-round':
 			return 'post-game';
 		case 'post-game':

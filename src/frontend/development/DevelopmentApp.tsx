@@ -1,6 +1,6 @@
 import { type FunctionalComponent } from 'preact';
 import { ClientContextProvider } from 'src/frontend/game/context/ClientContextProvider.tsx';
-import 'src/frontend/game/game-app.css';
+import 'src/frontend/development/development-app.css';
 import { Round } from 'src/frontend/game/Round.tsx';
 import { useState } from 'preact/hooks';
 import { Brush, DrawData } from 'src/frontend/components/Canvas.tsx';

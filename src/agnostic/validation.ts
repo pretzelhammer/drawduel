@@ -1,4 +1,4 @@
-import { GameId, PlayerId } from 'src/agnostic/gameState.ts';
+import { type GameId, type PlayerId } from 'src/agnostic/gameState.ts';
 
 const MIN_NAME_LENGTH = 2;
 const MIN_GAME_ID_LENGTH = 4;

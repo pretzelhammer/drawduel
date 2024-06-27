@@ -11,7 +11,7 @@
 // should set these round properties:
 // - 40 second timer to draw & guess
 // - 2x score multiplier
-export const easy = [
+export const easy: string[] = [
 	// general animals
 	'cat',
 	'bat',
@@ -105,7 +105,7 @@ export const easy = [
 // should set these round properties:
 // - 60 second timer to draw & guess
 // - 3x score multiplier
-export const hard = [
+export const hard: string[] = [
 	// animals
 	'pelican',
 	'orangutan',

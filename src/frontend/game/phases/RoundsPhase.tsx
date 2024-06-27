@@ -4,7 +4,8 @@ import { IncreaseMyScore } from 'src/frontend/game/components/IncreaseMyScore.ts
 import { ChangeName } from 'src/frontend/game/components/ChangeName.tsx';
 import { useClientContext } from 'src/frontend/game/context/ClientContextProvider.tsx';
 import { PrintClientContext } from 'src/frontend/game/components/PrintClientContext.tsx';
-import { ContextualTimer } from 'src/frontend/game/components/ContextualTimer';
+import { ContextualTimer } from 'src/frontend/game/components/ContextualTimer.tsx';
+import { PrintConstants } from 'src/frontend/game/components/PrintConstants.tsx';
 
 export const RoundsPhase: FunctionalComponent = () => {
 	const { clientContext } = useClientContext();
@@ -21,6 +22,7 @@ export const RoundsPhase: FunctionalComponent = () => {
 			<IncreaseMyScore />
 			<ChangeName />
 			<PrintClientContext />
+			<PrintConstants />
 		</>
 	);
 };

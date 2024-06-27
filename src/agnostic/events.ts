@@ -1,4 +1,4 @@
-import { GameEvent, GameState } from 'src/agnostic/gameState.ts';
+import { type GameEvent, type GameState } from 'src/agnostic/gameState.ts';
 
 export type ClientError =
 	| 'missing-game-id'

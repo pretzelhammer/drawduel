@@ -1,7 +1,7 @@
 import { type FunctionalComponent } from 'preact';
 import { useClientContext } from 'src/frontend/game/context/ClientContextProvider.tsx';
 import { Timer } from 'src/frontend/game/components/Timer.tsx';
-import { PlayerRole } from 'src/agnostic/gameState';
+import { type PlayerRole } from 'src/agnostic/gameState.ts';
 
 function roleToVerb(role: PlayerRole): string {
 	if (role === 'drawer') {

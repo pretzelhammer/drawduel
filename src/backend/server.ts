@@ -1,7 +1,7 @@
 import path from 'path';
 import express from 'express';
 import http from 'http';
-import { setupWsServer } from 'src/backend/wsServer';
+import { setupWsServer } from 'src/backend/wsServer.ts';
 
 const cwd = process.cwd();
 const app = express();

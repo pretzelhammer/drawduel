@@ -1,9 +1,9 @@
-import { type GameState, type PlayerId, initGameState, GameEvent } from 'src/agnostic/gameState.ts';
+import { type GameState, type PlayerId, initGameState, type GameEvent } from 'src/agnostic/gameState.ts';
 import { randomLongId, randomPlayerName } from 'src/agnostic/random.ts';
 import { parseGameId, parsePlayerPersona } from 'src/frontend/game/utils/parsing.ts';
 import isObject from 'lodash-es/isObject';
 import isString from 'lodash-es/isString';
-import { ClientError, ClientEvent, ServerError } from 'src/agnostic/events';
+import { type ClientError, type ClientEvent, type ServerError } from 'src/agnostic/events.ts';
 
 export enum Route {
 	Lobby = 'ROUTE_LOBBY',

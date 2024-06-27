@@ -4,6 +4,7 @@ import { IncreaseMyScore } from 'src/frontend/game/components/IncreaseMyScore.ts
 import { ChangeName } from 'src/frontend/game/components/ChangeName.tsx';
 import { useClientContext } from 'src/frontend/game/context/ClientContextProvider.tsx';
 import { PrintClientContext } from 'src/frontend/game/components/PrintClientContext.tsx';
+import { PrintConstants } from 'src/frontend/game/components/PrintConstants.tsx';
 
 export const LightningRoundPhase: FunctionalComponent = () => {
 	const { clientContext, setClientState } = useClientContext();
@@ -15,6 +16,7 @@ export const LightningRoundPhase: FunctionalComponent = () => {
 			<IncreaseMyScore />
 			<ChangeName />
 			<PrintClientContext />
+			<PrintConstants />
 		</>
 	);
 };

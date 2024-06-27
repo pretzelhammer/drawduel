@@ -2,7 +2,7 @@ import { adjectives } from 'src/agnostic/adjectives.ts';
 import { animals } from 'src/agnostic/animals.ts';
 import { easy, hard } from 'src/agnostic/words.ts';
 import { validName } from 'src/agnostic/validation.ts';
-import { WordChoices } from './gameState';
+import { type WordChoices } from 'src/agnostic/gameState.ts';
 
 export function pickRandomChar(string: string): string {
 	return string[Math.floor(Math.random() * string.length)];

@@ -9,15 +9,14 @@ import {
 	initServerGameContext,
 } from 'src/backend/serverContext.ts';
 import {
-	GameEvent,
-	GamePlayer,
-	GameState,
-	JoinEvent,
-	JoinTeamEvent,
-	LeftEvent,
-	NewRoundEvent,
-	PlayerDisconnectEvent,
-	PlayerReconnectEvent,
+	type GameEvent,
+	type GamePlayer,
+	type JoinEvent,
+	type JoinTeamEvent,
+	type LeftEvent,
+	type NewRoundEvent,
+	type PlayerDisconnectEvent,
+	type PlayerReconnectEvent,
 	advance,
 	canAdvance,
 	nextGamePhase,
@@ -25,12 +24,13 @@ import {
 	type PlayerId,
 	type TeamId,
 } from 'src/agnostic/gameState.ts';
-import { type ServerEvent, type ClientError, ClientEvent, BatchEvent } from 'src/agnostic/events.ts';
+import { type ServerEvent, type ClientError, type ClientEvent } from 'src/agnostic/events.ts';
 import { validGameId, validName, validPass, validPlayerId } from 'src/agnostic/validation';
-import { Maybe } from 'src/agnostic/types';
-import { pickRandomItem, randomWordChoices } from 'src/agnostic/random';
-import { Ms, msUntil, now, secondsFromNow, secondsToMs } from 'src/agnostic/time';
-import { isArray, isFunction } from 'lodash-es';
+import { type Maybe } from 'src/agnostic/types.ts';
+import { pickRandomItem, randomWordChoices } from 'src/agnostic/random.ts';
+import { type Ms, msUntil, now, secondsFromNow, secondsToMs } from 'src/agnostic/time.ts';
+import { isFunction } from 'lodash-es';
+import { MAX_ROUND_ID, UNREADY_PLAYER_WAIT_SECS, WORD_CHOICE_WAIT_SECS } from 'src/agnostic/constants.ts';
 
 /**
  * README
@@ -289,8 +289,7 @@ function nextRoundEvents(serverGameContext: ServerGameContext, delayedEmit: Dela
 		},
 	};
 	nextRoundEvents.push(newRound);
-	// intro phase should only last 3s
-	const endsAt = secondsFromNow(15); // TODO: change back to 3 later
+	const endsAt = secondsFromNow(WORD_CHOICE_WAIT_SECS);
 	nextRoundEvents.push({
 		type: 'timer',
 		data: endsAt,
@@ -320,7 +319,7 @@ function nextPhaseEvents(serverGameContext: ServerGameContext, delayedEmit: Dela
 		});
 		// create first round
 		nextPhaseEvents.push(...nextRoundEvents(serverGameContext, delayedEmit));
-	} else if (currentPhase === 'rounds' && currentRoundId < 14) {
+	} else if (currentPhase === 'rounds' && currentRoundId < MAX_ROUND_ID) {
 		// create next round
 		nextPhaseEvents.push(...nextRoundEvents(serverGameContext, delayedEmit));
 	} else {
@@ -387,7 +386,7 @@ function generateResponse(
 			responseEvents.push(...nextPhaseEvents(serverGameContext, delayedEmit));
 		} else {
 			// auto-start next phase without waiting for all players to ready
-			const fullDuration = secondsToMs(unreadyConnectedPlayers * 10); // change to 5-10 later
+			const fullDuration = secondsToMs(unreadyConnectedPlayers * UNREADY_PLAYER_WAIT_SECS);
 			if (!serverGameContext.serverState.recalcTimerFrom) {
 				serverGameContext.serverState.recalcTimerFrom = now();
 			}

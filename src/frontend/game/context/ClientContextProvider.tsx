@@ -1,7 +1,7 @@
 import { createContext, type FunctionalComponent } from 'preact';
 import { useContext, useState, useEffect, useRef } from 'preact/hooks';
 import { Socket } from 'socket.io-client';
-import { ClientEvent, MaybeBatchGameEvent, type ServerEvent } from 'src/agnostic/events.ts';
+import { type ClientEvent, type MaybeBatchGameEvent, type ServerEvent } from 'src/agnostic/events.ts';
 import { canAdvance, advance, type GameEvent } from 'src/agnostic/gameState.ts';
 import {
 	type ClientState,
