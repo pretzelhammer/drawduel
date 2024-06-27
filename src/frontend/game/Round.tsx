@@ -19,6 +19,8 @@ export const Round: FunctionalComponent<RoundProps> = ({ teamName, teamPreviews 
 	const [mode, setMode] = useState(Mode.Draw);
 	const [guess, setGuess] = useState('');
 	const time = '1:00';
+	// TODO: kirill I need a function that sends to server...
+	const onDraw = () => {};
 	return (
 		<>
 			<div>
@@ -26,7 +28,7 @@ export const Round: FunctionalComponent<RoundProps> = ({ teamName, teamPreviews 
 					<h2>{time}</h2>
 					<h3>{teamName}</h3>
 				</div>
-				<DrawStage mode={mode} onGuess={setGuess} />
+				<DrawStage mode={mode} onGuess={setGuess} onDraw={onDraw} />
 			</div>
 			<div class="previews">
 				{teamPreviews.map(() => (
