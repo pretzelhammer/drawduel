@@ -30,11 +30,67 @@ import { validGameId, validName, validPass, validPlayerId } from 'src/agnostic/v
 import { Maybe } from 'src/agnostic/types';
 import { pickRandomItem, randomWordChoices } from 'src/agnostic/random';
 import { Ms, msUntil, now, secondsFromNow, secondsToMs } from 'src/agnostic/time';
-import { isFunction } from 'lodash-es';
+import { isArray, isFunction } from 'lodash-es';
+
+/**
+ * README
+ *
+ * There are several properties of game events that you need to
+ * be aware of to understand the code below.
+ *
+ * Server events vs Client events
+ * - malicious (or buggy) clients can generate game events that
+ *   they may not have the permission to generate, for example:
+ *   Client A may generate a game event to change Client B's
+ *   player name, which obviously should not be allowed, and as
+ *   such we always check that the client who generated a particular
+ *   game event has the permission to do so before we attempt to
+ *   execute it
+ * - server has the authority to generate any game event, so we
+ *   don't need to do any permission checks for server generated
+ *   game events
+ *
+ * Response events
+ * - generally the server just checks, executes, and emits events
+ *   from one client to all other clients, and that's how the game
+ *   works for the most part, but sometimes a client event requires
+ *   the server to generate several follow-up events as a response,
+ *   and these are called response events. only client events can
+ *   trigger response events, response events cannot trigger more
+ *   response events.
+ *
+ * Checked events vs Unchecked events
+ * - before we attempt to execute an event, we first check to see
+ *   if that event is even executable on the current game state,
+ *   and if it is we refer to it as a checked event, otherwise it
+ *   is an unchecked event
+ *
+ * Executed events vs Unexecuted events
+ * - after an event has been checked, it can be executed, which means
+ *   we apply it to the server game state, once it has been executed
+ *   it is called an executed event, otherwise it is an unexecuted
+ *   event
+ *
+ * Emitted events vs Unemitted events
+ * - after an event has been checked and executed
+ *
+ * Server Event --> Checked --> Executed --> Emitted
+ *
+ * Client Event --> hasPermission --> Checked --> Executed --> Emitted
+ *                                                   |
+ *                                                   V
+ *                                               hasResponse --> Response Events
+ *
+ * Response Event --> Checked --> Executed --> Emitted
+ */
 
 const wsOptions: Partial<ServerOptions> = {};
 
-function smallestTeam(gameState: GameState): TeamId {
+/**
+ * returns team with least amount of players
+ */
+function smallestTeam(serverGameContext: ServerGameContext): TeamId {
+	const gameState = serverGameContext.gameState;
 	const teamIds = Object.keys(gameState.teams);
 	if (teamIds.length === 0) {
 		return '1';
@@ -51,6 +107,9 @@ function smallestTeam(gameState: GameState): TeamId {
 	return minTeamId;
 }
 
+/**
+ * returns unchecked unexecuted unemitted events
+ */
 function distributeAcrossTeams(playerIds: PlayerId[], teamCount: number): JoinTeamEvent[] {
 	const joinTeamEvents: JoinTeamEvent[] = [];
 	let teamIdInt = 0;
@@ -69,9 +128,10 @@ function distributeAcrossTeams(playerIds: PlayerId[], teamCount: number): JoinTe
 }
 
 /**
- * can improve this by a lot buuuuut it's okay for now
+ * returns unchecked unexecuted unemitted events
  */
-function rebalanceTeams(gameState: GameState): JoinTeamEvent[] {
+function rebalanceTeams(serverGameContext: ServerGameContext): JoinTeamEvent[] {
+	const gameState = serverGameContext.gameState;
 	const playerIds: PlayerId[] = Object.keys(gameState.players);
 	const playerCount = playerIds.length;
 
@@ -99,8 +159,8 @@ function rebalanceTeams(gameState: GameState): JoinTeamEvent[] {
 	} else if (playerCount >= 36 && playerCount <= 40) {
 		// 8 teams, 4-5 players each
 		return distributeAcrossTeams(playerIds, 8);
-	} else if (playerCount >= 41 && playerCount <= 81) {
-		// 9 teams, 4-9 players each
+	} else if (playerCount >= 41 && playerCount <= 90) {
+		// 9 teams, 4-10 players each
 		return distributeAcrossTeams(playerIds, 9);
 	} else {
 		throw new Error(`TOO MANY PLAYERS ${playerCount}`);
@@ -134,11 +194,12 @@ function correctPass(gameId: GameId, playerId: PlayerId, pass: string): boolean 
 }
 
 /**
- * checks if the player that produced this event had the permission
- * to do so
+ * checks if the player that produced this event has
+ * the permission to do so
+ * @param gameEvent an unchecked unexecuted unemitted event
  */
-function hasPermission(playerId: PlayerId, gameId: GameId, gameEvent: GameEvent): boolean {
-	const gameState = serverContext[gameId].gameState;
+function hasPermission(playerId: PlayerId, serverGameContext: ServerGameContext, gameEvent: GameEvent): boolean {
+	const gameState = serverGameContext.gameState;
 	const player: Maybe<GamePlayer> = gameState.players[playerId];
 	if (!player) {
 		return false;
@@ -194,14 +255,16 @@ function hasPermission(playerId: PlayerId, gameId: GameId, gameEvent: GameEvent)
 }
 
 /**
- * checks if given game event can advance the specific game on the server
+ * checks if given game event is executable on the given server game state
+ * @param gameEvent an unchecked event
  */
 function canAdvanceServerGame(serverGameContext: ServerGameContext, gameEvent: GameEvent): boolean {
 	return canAdvance(serverGameContext.gameState, gameEvent);
 }
 
 /**
- * advances game state on the server given the game event
+ * executes the game event, i.e. applies it to the server game state
+ * @param gameEvent a checked unexecuted event
  */
 function advanceServerGame(serverGameContext: ServerGameContext, gameEvent: GameEvent) {
 	const currentGameState = serverGameContext.gameState;
@@ -209,6 +272,9 @@ function advanceServerGame(serverGameContext: ServerGameContext, gameEvent: Game
 	serverGameContext.gameState = nextGameState;
 }
 
+/**
+ * returns unchecked unexecuted unemitted events
+ */
 function nextRoundEvents(serverGameContext: ServerGameContext, delayedEmit: DelayedEventEmitter): GameEvent[] {
 	const nextRoundEvents: GameEvent[] = [];
 	const drawers = selectDrawersForRound(serverGameContext);
@@ -239,6 +305,9 @@ function nextRoundEvents(serverGameContext: ServerGameContext, delayedEmit: Dela
 	return nextRoundEvents;
 }
 
+/**
+ * returns unchecked unexecuted unemitted events
+ */
 function nextPhaseEvents(serverGameContext: ServerGameContext, delayedEmit: DelayedEventEmitter): GameEvent[] {
 	const gameState = serverGameContext.gameState;
 	const currentPhase = gameState.phase;
@@ -270,14 +339,30 @@ function nextPhaseEvents(serverGameContext: ServerGameContext, delayedEmit: Dela
  * and emit a timer update, and when the timer expires
  * or all players ready then game phase advances
  */
-function hasResponse(gameEvent: GameEvent): boolean {
-	return gameEvent.type === 'ready';
+function hasResponse(serverGameContext: ServerGameContext, gameEvent: GameEvent): boolean {
+	if (gameEvent.type === 'ready') {
+		// if players are readying it means
+		// we need to set or update the
+		// next-phase timer
+		return true;
+	}
+	const gamePhase = serverGameContext.gameState.phase;
+	if (gameEvent.type === 'join' && gamePhase === 'pre-game') {
+		// player joining in pre-game phase triggers
+		// a team rebalance
+		return true;
+	}
+	if (gameEvent.type === 'left' && gamePhase === 'pre-game') {
+		// player leaving in pre-game phase triggers
+		// a team rebalance
+		return true;
+	}
+	return false;
 }
 
 /**
- * the serverGameContext this function receives is already AFTER the given gameEvent
- * has been applied, also the generated response might include a timeout delay,
- * which is why the emitAll function has to be passed
+ * returns unchecked unexecuted unemitted events
+ * @param gameEvent a checked executed unemitted event
  */
 function generateResponse(
 	serverGameContext: ServerGameContext,
@@ -333,10 +418,15 @@ function generateResponse(
 				data: endsAt,
 			});
 		}
+	} else if (gameEvent.type === 'join' || gameEvent.type === 'left') {
+		// TODO copy team rebalancing code here
 	}
 	return responseEvents;
 }
 
+/**
+ * selects drawers
+ */
 function selectDrawersForRound(serverGameContext: ServerGameContext): PlayerId[] {
 	const drawers = [];
 	const teams = Object.values(serverGameContext.gameState.teams);
@@ -456,7 +546,7 @@ export function setupWsServer(httpServer: HttpServer) {
 		if (!serverGameContext.gameState.players[playerId]) {
 			// create and broadcast join event to all current players in game
 			// except for the just connected player
-			const smallestTeamId = smallestTeam(serverGameContext.gameState);
+			const smallestTeamId = smallestTeam(serverGameContext);
 			const joinEvent: JoinEvent = { type: 'join', data: { id: playerId, name, team: smallestTeamId } };
 			if (canAdvanceServerGame(serverGameContext, joinEvent)) {
 				advanceServerGame(serverGameContext, joinEvent);
@@ -465,7 +555,7 @@ export function setupWsServer(httpServer: HttpServer) {
 				// can also create or delete teams
 				const joinTeamEvents: JoinTeamEvent[] = [];
 				if (serverGameContext.gameState.phase === 'pre-game') {
-					const rebalanceEvents: JoinTeamEvent[] = rebalanceTeams(serverGameContext.gameState);
+					const rebalanceEvents: JoinTeamEvent[] = rebalanceTeams(serverGameContext);
 					for (let rebalanceEvent of rebalanceEvents) {
 						if (canAdvanceServerGame(serverGameContext, rebalanceEvent)) {
 							advanceServerGame(serverGameContext, rebalanceEvent);
@@ -520,7 +610,7 @@ export function setupWsServer(httpServer: HttpServer) {
 					// if the game hasn't started yet
 					const joinTeamEvents: JoinTeamEvent[] = [];
 					if (serverGameContext.gameState.phase === 'pre-game') {
-						const rebalanceEvents: JoinTeamEvent[] = rebalanceTeams(serverGameContext.gameState);
+						const rebalanceEvents: JoinTeamEvent[] = rebalanceTeams(serverGameContext);
 						for (let rebalanceEvent of rebalanceEvents) {
 							if (canAdvanceServerGame(serverGameContext, rebalanceEvent)) {
 								advanceServerGame(serverGameContext, rebalanceEvent);
@@ -568,10 +658,13 @@ export function setupWsServer(httpServer: HttpServer) {
 			for (let gameEvent of gameEvents) {
 				// check that the player who produced this event has the permission
 				// to produce it, and check that it will advance the game state
-				if (hasPermission(playerId, gameId, gameEvent) && canAdvanceServerGame(serverGameContext, gameEvent)) {
+				if (
+					hasPermission(playerId, serverGameContext, gameEvent) &&
+					canAdvanceServerGame(serverGameContext, gameEvent)
+				) {
 					advanceServerGame(serverGameContext, gameEvent);
 					gameEventsToEmit.push(gameEvent);
-					if (hasResponse(gameEvent)) {
+					if (hasResponse(serverGameContext, gameEvent)) {
 						let responseEvents = generateResponse(serverGameContext, gameEvent, delayedEmitAll);
 						for (let responseEvent of responseEvents) {
 							if (canAdvanceServerGame(serverGameContext, responseEvent)) {
@@ -620,8 +713,145 @@ export type DelayedEventEmitter = (
 	delay: Ms,
 ) => NodeJS.Timeout;
 
-function executeEvent(serverGameContext: ServerGameContext, gameEvent: GameEvent, delayedEmit: DelayedEventEmitter) {
+/**
+ * batches game events ready to be emitted
+ * @param gameEvents checked executed unemitted events
+ */
+function batch(gameEvents: GameEvent[]): Maybe<ServerEvent> {
+	if (gameEvents.length === 0) {
+		return null;
+	}
+	if (gameEvents.length === 1) {
+		return gameEvents[0];
+	}
+	return {
+		type: 'batch',
+		data: gameEvents,
+	};
+}
+
+/**
+ * returns checked executed unemitted events
+ * @param gameEvents unchecked unexecuted unemitted events
+ */
+function executeServerGameEvents(
+	serverGameContext: ServerGameContext,
+	gameEvents: GameEvent[],
+	delayedEmit: DelayedEventEmitter,
+): GameEvent[] {
+	// tiny perf optimization
+	if (gameEvents.length === 0) {
+		return gameEvents;
+	}
+	const executedEvents: GameEvent[] = [];
+	for (let gameEvent of gameEvents) {
+		executedEvents.push(...executeServerGameEvent(serverGameContext, gameEvent, delayedEmit));
+	}
+	return executedEvents;
+}
+
+/**
+ * returns checked executed unemitted events
+ * @param gameEvent unchecked unexecuted unemitted events
+ */
+function executeServerGameEvent(
+	serverGameContext: ServerGameContext,
+	gameEvent: GameEvent,
+	delayedEmit: DelayedEventEmitter,
+): GameEvent[] {
+	const executedEvents: GameEvent[] = [];
 	if (canAdvanceServerGame(serverGameContext, gameEvent)) {
 		advanceServerGame(serverGameContext, gameEvent);
+		executedEvents.push(gameEvent);
+		if (hasResponse(serverGameContext, gameEvent)) {
+			const responseEvents = generateResponse(serverGameContext, gameEvent, delayedEmit);
+			executedEvents.push(...executeServerGameEvents(serverGameContext, responseEvents, delayedEmit));
+		}
 	}
+	return executedEvents;
+}
+
+/**
+ * returns checked executed unemitted events
+ * @param serverEvent unchecked unexecuted unemitted event (could be batch event)
+ */
+function executeServerEvent(
+	playerId: PlayerId,
+	serverGameContext: ServerGameContext,
+	serverEvent: ServerEvent,
+	delayedEmit: DelayedEventEmitter,
+): GameEvent[] {
+	// if batch event
+	if (serverEvent.type === 'batch') {
+		return executeClientGameEvents(playerId, serverGameContext, serverEvent.data, delayedEmit);
+	}
+	if (
+		serverEvent.type === 'server-error' ||
+		serverEvent.type === 'client-error' ||
+		serverEvent.type === 'set-game-state'
+	) {
+		throw new Error(`server event type ${serverEvent.type} is not executable on the server`);
+	}
+	// if regular single game event
+	return executeClientGameEvent(playerId, serverGameContext, serverEvent, delayedEmit);
+}
+
+/**
+ * returns checked executed unemitted events
+ * @param gameEvent unchecked unexecuted unemitted events
+ */
+function executeClientGameEvent(
+	playerId: PlayerId,
+	serverGameContext: ServerGameContext,
+	gameEvent: GameEvent,
+	delayedEmit: DelayedEventEmitter,
+): GameEvent[] {
+	if (hasPermission(playerId, serverGameContext, gameEvent)) {
+		// after checking permission we can treat the event
+		// as a server event
+		return executeServerGameEvent(serverGameContext, gameEvent, delayedEmit);
+	}
+	return [];
+}
+
+/**
+ * returns checked executed unemitted events
+ * @param gameEvent unchecked unexecuted unemitted events
+ */
+function executeClientGameEvents(
+	playerId: PlayerId,
+	serverGameContext: ServerGameContext,
+	gameEvents: GameEvent[],
+	delayedEmit: DelayedEventEmitter,
+): GameEvent[] {
+	if (gameEvents.length === 0) {
+		return gameEvents;
+	}
+	const executedEvents: GameEvent[] = [];
+	for (let gameEvent of gameEvents) {
+		if (hasPermission(playerId, serverGameContext, gameEvent)) {
+			// after checking permission we can treat the event
+			// as a server event
+			executedEvents.push(...executeServerGameEvent(serverGameContext, gameEvent, delayedEmit));
+		}
+	}
+	return executedEvents;
+}
+
+/**
+ * returns checked executed unemitted events
+ * @param clientEvent unchecked unexecuted unemitted event (could be batch event)
+ */
+function executeClientEvent(
+	playerId: PlayerId,
+	serverGameContext: ServerGameContext,
+	clientEvent: ClientEvent,
+	delayedEmit: DelayedEventEmitter,
+): GameEvent[] {
+	// if batch event
+	if (clientEvent.type === 'batch') {
+		return executeClientGameEvents(playerId, serverGameContext, clientEvent.data, delayedEmit);
+	}
+	// if regular single game event
+	return executeClientGameEvent(playerId, serverGameContext, clientEvent, delayedEmit);
 }
