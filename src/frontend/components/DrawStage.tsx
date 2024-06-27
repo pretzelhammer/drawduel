@@ -1,6 +1,6 @@
 import { type FunctionalComponent } from 'preact';
 import { useRef, useState } from 'preact/hooks';
-import { Canvas, CanvasMode, DrawData, PreviewMode } from 'src/frontend/components/Canvas.tsx';
+import { Brush, Canvas, CanvasMode, DrawData, PreviewMode } from 'src/frontend/components/Canvas.tsx';
 import classes from 'src/frontend/components/DrawStage.module.css';
 import { LineInput } from 'src/frontend/components/LineInput.tsx';
 
@@ -23,20 +23,15 @@ export enum Size {
 	Large = 24,
 }
 
-export enum Tool {
-	Pencil = 'TOOL_PENCIL',
-	Eraser = 'TOOL_ERASER',
-}
-
 const SIZES = [
 	{ name: 'small', size: Size.Small },
 	{ name: 'medium', size: Size.Medium },
 	{ name: 'large', size: Size.Large },
 ];
 
-const TOOLS = [
-	{ icon: '✏️', tool: Tool.Pencil },
-	{ icon: '🧽', tool: Tool.Eraser },
+const BRUSH = [
+	{ icon: '✏️', brush: Brush.Pencil },
+	{ icon: '🧽', brush: Brush.Eraser },
 ];
 
 export enum Mode {
@@ -52,11 +47,10 @@ export interface DrawStageProps {
 
 export const DrawStage: FunctionalComponent<DrawStageProps> = ({ mode, onDraw, onGuess }) => {
 	const [guess, setGuess] = useState('');
-	const ref = useRef<HTMLCanvasElement | null>(null);
 	const [brushSettings, setBrushSettings] = useState({
 		color: Color.Black,
 		size: Size.Small,
-		tool: Tool.Pencil,
+		brush: Brush.Pencil,
 	});
 	const canvasDimensions = {
 		width: 400,
@@ -65,30 +59,32 @@ export const DrawStage: FunctionalComponent<DrawStageProps> = ({ mode, onDraw, o
 	const colors = Object.values(Color);
 
 	const onClearClick = () => {
-		const canvas = ref.current;
-		if (!canvas) {
-			throw new Error('Could not get canvas');
-		}
-		const context = canvas.getContext('2d');
-		if (!context) {
-			throw new Error('Could not get 2d context');
-		}
-		context.clearRect(0, 0, canvas.width, canvas.height);
+		setBrushSettings({
+			...brushSettings,
+			brush: Brush.Clear,
+		});
+	};
+
+	const onClearFromCanvas = () => {
+		setBrushSettings({
+			...brushSettings,
+			brush: Brush.Pencil,
+		});
 	};
 
 	const DrawSideBar = (
 		<div className={classes['draw-mode']}>
 			<div className={classes['tools']}>
-				{TOOLS.map(({ icon, tool }) => (
+				{BRUSH.map(({ icon, brush }) => (
 					<button
-						key={tool}
+						key={brush}
 						onClick={() =>
 							setBrushSettings({
 								...brushSettings,
-								tool,
+								brush,
 							})
 						}
-						className={brushSettings.tool === tool ? classes['tool--selected'] : ''}
+						className={brushSettings.brush === brush ? classes['tool--selected'] : ''}
 					>
 						{icon}
 					</button>
@@ -122,7 +118,7 @@ export const DrawStage: FunctionalComponent<DrawStageProps> = ({ mode, onDraw, o
 						onClick={() =>
 							setBrushSettings({
 								...brushSettings,
-								tool: Tool.Pencil,
+								brush: Brush.Pencil,
 								color,
 							})
 						}
@@ -148,14 +144,11 @@ export const DrawStage: FunctionalComponent<DrawStageProps> = ({ mode, onDraw, o
 			<Canvas
 				mode={{
 					name: CanvasMode.Draw,
-					brushSettings: {
-						...brushSettings,
-						color: brushSettings.tool === Tool.Eraser ? 'white' : brushSettings.color,
-					},
+					brushSettings,
 					canvasDimensions,
 					onDraw,
+					onClear: onClearFromCanvas,
 				}}
-				ref={ref}
 			/>
 			{mode === Mode.Draw ? DrawSideBar : GuessSideBar}
 		</div>
