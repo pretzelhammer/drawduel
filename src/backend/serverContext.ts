@@ -1,4 +1,4 @@
-import { type GameState, type GameId, type PlayerId, initGameState } from 'src/agnostic/gameState.ts';
+import { type GameState, type GameId, type PlayerId, initGameState, UnixMs } from 'src/agnostic/gameState.ts';
 
 // record of game ids to games
 export interface ServerContext {
@@ -17,6 +17,7 @@ export interface ServerGameContext {
 export interface ServerState {
 	players: ServerPlayersState;
 	timerId: NodeJS.Timeout;
+	recalcTimerFrom: UnixMs;
 }
 
 export interface ServerPlayersState {
@@ -33,6 +34,7 @@ export function initServerState(): ServerState {
 	return {
 		players: {},
 		timerId: setTimeout(() => {}, 0),
+		recalcTimerFrom: 0,
 	};
 }
 

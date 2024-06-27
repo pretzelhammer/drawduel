@@ -30,7 +30,7 @@ import { type ServerEvent, type ClientError, ClientEvent, BatchEvent } from 'src
 import { validGameId, validName, validPass, validPlayerId } from 'src/agnostic/validation';
 import { Maybe } from 'src/agnostic/types';
 import { pickRandomItem, randomWordChoices } from 'src/agnostic/random';
-import { now, secondsFromNow, secondsToMs } from 'src/agnostic/time';
+import { msUntil, now, secondsFromNow, secondsToMs } from 'src/agnostic/time';
 
 const wsOptions: Partial<ServerOptions> = {};
 
@@ -301,8 +301,11 @@ function generateResponse(
 			responseEvents.push(...nextPhaseEvents(serverGameContext, emitAll));
 		} else {
 			// auto-start next phase without waiting for all players to ready
-			const timeoutDuration = secondsToMs(unreadyConnectedPlayers * 10); // change to 5-10 later
-			const endsAt = now() + timeoutDuration;
+			const fullDuration = secondsToMs(unreadyConnectedPlayers * 10); // change to 5-10 later
+			if (!serverGameContext.serverState.recalcTimerFrom) {
+				serverGameContext.serverState.recalcTimerFrom = now();
+			}
+			const endsAt = serverGameContext.serverState.recalcTimerFrom + fullDuration;
 			serverGameContext.serverState.timerId = setTimeout(() => {
 				const phaseEvents = nextPhaseEvents(serverGameContext, emitAll);
 				const toEmit: GameEvent[] = [];
@@ -322,7 +325,7 @@ function generateResponse(
 						});
 					}
 				}
-			}, timeoutDuration);
+			}, msUntil(endsAt));
 			// notify players of auto-start timeout
 			responseEvents.push({
 				type: 'timer',
