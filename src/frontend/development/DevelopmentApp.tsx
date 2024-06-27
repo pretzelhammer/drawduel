@@ -3,6 +3,8 @@ import { ClientContextProvider } from 'src/frontend/game/context/ClientContextPr
 import 'src/frontend/game/game-app.css';
 import { Round } from 'src/frontend/game/Round.tsx';
 import { useState } from 'preact/hooks';
+import { Brush, DrawData } from 'src/frontend/components/Canvas.tsx';
+import { Color, Size } from 'src/frontend/components/DrawStage.tsx';
 
 export enum GameMode {
 	SingleTeam = 'GAME_MODE_SINGLE_TEAM',
@@ -13,6 +15,26 @@ export const DevelopmentApp: FunctionalComponent = () => {
 	const [gameMode, setGameMode] = useState(GameMode.SingleTeam);
 	const onSingleTeamClick = () => setGameMode(GameMode.SingleTeam);
 	const onMultiTeamClick = () => setGameMode(GameMode.MultiTeam);
+
+	const [preview, setPreview] = useState<DrawData>({
+		brushSettings: {
+			brush: Brush.Pencil,
+			color: Color.Black,
+			size: Size.Small,
+		},
+		canvasDimensions: {
+			width: 600,
+			height: 400,
+		},
+		start: {
+			x: 0,
+			y: 0,
+		},
+		end: {
+			x: 0,
+			y: 0,
+		},
+	});
 	return (
 		<ClientContextProvider>
 			<button onClick={onSingleTeamClick}>Single Team</button>
@@ -27,16 +49,12 @@ export const DevelopmentApp: FunctionalComponent = () => {
 								{
 									teamName: 'team 1',
 									drawer: 'drawer 1',
-									canvasPreview: 'canvas preview',
-								},
-								{
-									teamName: 'team 2',
-									drawer: 'drawer 2',
-									canvasPreview: 'canvas preview',
+									canvasPreview: preview,
 								},
 							]
 						: []
 				}
+				onDraw={setPreview}
 			/>
 		</ClientContextProvider>
 	);

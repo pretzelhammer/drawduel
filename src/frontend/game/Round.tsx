@@ -2,20 +2,23 @@ import { type FunctionalComponent } from 'preact';
 import { useState } from 'preact/hooks';
 import { DrawStage, Mode } from 'src/frontend/components/DrawStage.tsx';
 import classes from 'src/frontend/game/Round.module.css';
+import { Canvas, CanvasMode, DrawData } from 'src/frontend/components/Canvas.tsx';
 
 export interface TeamPreview {
 	readonly teamName: string;
 	readonly drawer: string;
 	// TODO: replace unknown with the correct type
-	readonly canvasPreview: unknown;
+	readonly canvasPreview: DrawData;
 }
 
 export interface RoundProps {
 	readonly teamName: string;
 	readonly teamPreviews: TeamPreview[];
+	// TODO: remove. this is for testing
+	readonly onDraw: (drawData: DrawData) => void;
 }
 
-export const Round: FunctionalComponent<RoundProps> = ({ teamName, teamPreviews }: RoundProps) => {
+export const Round: FunctionalComponent<RoundProps> = ({ teamName, teamPreviews, onDraw }: RoundProps) => {
 	// TODO: server stuff. thanks kirill
 	const [mode, setMode] = useState(Mode.Draw);
 	const [guess, setGuess] = useState('');
@@ -23,7 +26,7 @@ export const Round: FunctionalComponent<RoundProps> = ({ teamName, teamPreviews 
 	// TODO: kirill I need a function that sends to server...
 
 	const word = mode === Mode.Draw ? 'word' : '_ _ _ _';
-	const onDraw = () => {};
+	// const onDraw = () => {};
 
 	const previews =
 		teamPreviews.length > 0 ? (
@@ -34,7 +37,9 @@ export const Round: FunctionalComponent<RoundProps> = ({ teamName, teamPreviews 
 							<h3>{preview.teamName}</h3>
 							<h3>✏️ {preview.drawer}</h3>
 						</div>
-						<div class={classes['canvas']}></div>
+						<div class={classes['canvas']}>
+							<Canvas mode={{ name: CanvasMode.Preview, drawData: preview.canvasPreview }} />
+						</div>
 					</div>
 				))}
 			</div>

@@ -59,6 +59,7 @@ export const DrawStage: FunctionalComponent<DrawStageProps> = ({ mode, onDraw, o
 	const colors = Object.values(Color);
 
 	const onClearClick = () => {
+		console.log('clear');
 		setBrushSettings({
 			...brushSettings,
 			brush: Brush.Clear,
@@ -66,10 +67,11 @@ export const DrawStage: FunctionalComponent<DrawStageProps> = ({ mode, onDraw, o
 	};
 
 	const onClearFromCanvas = () => {
-		setBrushSettings({
-			...brushSettings,
-			brush: Brush.Pencil,
-		});
+		console.log('unclear');
+		// setBrushSettings({
+		// 	...brushSettings,
+		// 	brush: Brush.Pencil,
+		// });
 	};
 
 	const DrawSideBar = (

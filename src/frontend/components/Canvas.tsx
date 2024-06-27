@@ -152,12 +152,15 @@ export const Canvas: FunctionalComponent<CanvasProps> = ({ mode }) => {
 			};
 		} else if (mode.name === CanvasMode.Preview) {
 			const { brush, color, size } = mode.drawData.brushSettings;
+			console.log(brush);
 			if (brush === Brush.Clear) {
+				console.log('clear');
 				context.clearRect(0, 0, canvas.width, canvas.height);
 			} else {
+				console.log('preview mode', mode.drawData.brushSettings);
 				const { start, end } = mode.drawData;
 				context.beginPath();
-				context.strokeStyle = Brush.Eraser ? 'white' : color;
+				context.strokeStyle = brush === Brush.Eraser ? 'white' : color;
 				context.lineWidth = size;
 				context.lineCap = 'round';
 				context.moveTo(start.x, start.y);
