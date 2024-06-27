@@ -29,7 +29,8 @@ import { type ServerEvent, type ClientError, ClientEvent, BatchEvent } from 'src
 import { validGameId, validName, validPass, validPlayerId } from 'src/agnostic/validation';
 import { Maybe } from 'src/agnostic/types';
 import { pickRandomItem, randomWordChoices } from 'src/agnostic/random';
-import { msUntil, now, secondsFromNow, secondsToMs } from 'src/agnostic/time';
+import { Ms, msUntil, now, secondsFromNow, secondsToMs } from 'src/agnostic/time';
+import { isFunction } from 'lodash-es';
 
 const wsOptions: Partial<ServerOptions> = {};
 
@@ -208,7 +209,7 @@ function advanceServerGame(serverGameContext: ServerGameContext, gameEvent: Game
 	serverGameContext.gameState = nextGameState;
 }
 
-function nextRoundEvents(serverGameContext: ServerGameContext, emitAll: (event: ServerEvent) => void): GameEvent[] {
+function nextRoundEvents(serverGameContext: ServerGameContext, delayedEmit: DelayedEventEmitter): GameEvent[] {
 	const nextRoundEvents: GameEvent[] = [];
 	const drawers = selectDrawersForRound(serverGameContext);
 	const chooser = pickRandomItem(drawers);
@@ -228,16 +229,17 @@ function nextRoundEvents(serverGameContext: ServerGameContext, emitAll: (event: 
 		type: 'timer',
 		data: endsAt,
 	});
-	serverGameContext.serverState.timerId = setTimeout(() => {
-		emitAll({
+	serverGameContext.serverState.timerId = delayedEmit(
+		{
 			type: 'round-phase',
 			data: 'pre-play',
-		});
-	}, endsAt - now());
+		},
+		endsAt - now(),
+	);
 	return nextRoundEvents;
 }
 
-function nextPhaseEvents(serverGameContext: ServerGameContext, emitAll: (event: ServerEvent) => void): GameEvent[] {
+function nextPhaseEvents(serverGameContext: ServerGameContext, delayedEmit: DelayedEventEmitter): GameEvent[] {
 	const gameState = serverGameContext.gameState;
 	const currentPhase = gameState.phase;
 	const currentRoundId = gameState.round;
@@ -248,10 +250,10 @@ function nextPhaseEvents(serverGameContext: ServerGameContext, emitAll: (event: 
 			data: nextGamePhase(serverGameContext.gameState.phase),
 		});
 		// create first round
-		nextPhaseEvents.push(...nextRoundEvents(serverGameContext, emitAll));
+		nextPhaseEvents.push(...nextRoundEvents(serverGameContext, delayedEmit));
 	} else if (currentPhase === 'rounds' && currentRoundId < 14) {
 		// create next round
-		nextPhaseEvents.push(...nextRoundEvents(serverGameContext, emitAll));
+		nextPhaseEvents.push(...nextRoundEvents(serverGameContext, delayedEmit));
 	} else {
 		nextPhaseEvents.push({
 			type: 'game-phase',
@@ -280,7 +282,7 @@ function hasResponse(gameEvent: GameEvent): boolean {
 function generateResponse(
 	serverGameContext: ServerGameContext,
 	gameEvent: GameEvent,
-	emitAll: (event: ServerEvent) => void,
+	delayedEmit: DelayedEventEmitter,
 ): GameEvent[] {
 	const responseEvents: GameEvent[] = [];
 	if (gameEvent.type === 'ready') {
@@ -297,7 +299,7 @@ function generateResponse(
 		// the timer because new players have readied/disconnected
 		clearTimeout(serverGameContext.serverState.timerId);
 		if (unreadyConnectedPlayers === 0) {
-			responseEvents.push(...nextPhaseEvents(serverGameContext, emitAll));
+			responseEvents.push(...nextPhaseEvents(serverGameContext, delayedEmit));
 		} else {
 			// auto-start next phase without waiting for all players to ready
 			const fullDuration = secondsToMs(unreadyConnectedPlayers * 10); // change to 5-10 later
@@ -305,8 +307,8 @@ function generateResponse(
 				serverGameContext.serverState.recalcTimerFrom = now();
 			}
 			const endsAt = serverGameContext.serverState.recalcTimerFrom + fullDuration;
-			serverGameContext.serverState.timerId = setTimeout(() => {
-				const phaseEvents = nextPhaseEvents(serverGameContext, emitAll);
+			serverGameContext.serverState.timerId = delayedEmit((emit) => {
+				const phaseEvents = nextPhaseEvents(serverGameContext, delayedEmit);
 				const toEmit: GameEvent[] = [];
 				for (let phaseEvent of phaseEvents) {
 					if (canAdvanceServerGame(serverGameContext, phaseEvent)) {
@@ -316,9 +318,9 @@ function generateResponse(
 				}
 				if (toEmit.length > 0) {
 					if (toEmit.length === 1) {
-						emitAll(toEmit[0]);
+						emit(toEmit[0]);
 					} else {
-						emitAll({
+						emit({
 							type: 'batch',
 							data: toEmit,
 						});
@@ -419,6 +421,8 @@ export function setupWsServer(httpServer: HttpServer) {
 		function emitAll(event: ServerEvent) {
 			wsServer.to(gameId!).emit('event', event);
 		}
+
+		const delayedEmitAll = withDelay(emitAll);
 
 		// is this a new game?
 		if (!serverContext[gameId]) {
@@ -568,7 +572,7 @@ export function setupWsServer(httpServer: HttpServer) {
 					advanceServerGame(serverGameContext, gameEvent);
 					gameEventsToEmit.push(gameEvent);
 					if (hasResponse(gameEvent)) {
-						let responseEvents = generateResponse(serverGameContext, gameEvent, emitAll);
+						let responseEvents = generateResponse(serverGameContext, gameEvent, delayedEmitAll);
 						for (let responseEvent of responseEvents) {
 							if (canAdvanceServerGame(serverGameContext, responseEvent)) {
 								advanceServerGame(serverGameContext, responseEvent);
@@ -593,10 +597,31 @@ export function setupWsServer(httpServer: HttpServer) {
 	});
 }
 
-function executeEvent(
-	serverGameContext: ServerGameContext,
-	gameEvent: GameEvent,
-	emitAll: (event: ServerEvent) => void,
-) {
-	// if (canAdvanceServerGame(serverGameContext))
+function withDelay(emit: EventEmitter): DelayedEventEmitter {
+	return (eventOrCallback: ServerEvent | DelayedEventEmitterCallback, delay: Ms) => {
+		if (isFunction(eventOrCallback)) {
+			const callback: DelayedEventEmitterCallback = eventOrCallback;
+			return setTimeout(() => {
+				callback(emit);
+			}, delay);
+		} else {
+			const event: ServerEvent = eventOrCallback;
+			return setTimeout(() => {
+				emit(event);
+			}, delay);
+		}
+	};
+}
+
+export type EventEmitter = (event: ServerEvent) => void;
+export type DelayedEventEmitterCallback = (emitter: EventEmitter) => void;
+export type DelayedEventEmitter = (
+	eventOrCallback: ServerEvent | DelayedEventEmitterCallback,
+	delay: Ms,
+) => NodeJS.Timeout;
+
+function executeEvent(serverGameContext: ServerGameContext, gameEvent: GameEvent, delayedEmit: DelayedEventEmitter) {
+	if (canAdvanceServerGame(serverGameContext, gameEvent)) {
+		advanceServerGame(serverGameContext, gameEvent);
+	}
 }
