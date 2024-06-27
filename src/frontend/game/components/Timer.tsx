@@ -25,7 +25,7 @@ export const Timer: FunctionalComponent<TimerProps> = ({ message }) => {
 			} else {
 				setSecondsLeft(timeRemaining);
 			}
-		}, 1000);
+		}, 500);
 
 		return () => clearInterval(timer);
 	}, [clientContext.gameState.timer]);

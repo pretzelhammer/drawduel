@@ -550,7 +550,6 @@ export function setupWsServer(httpServer: HttpServer) {
 			const smallestTeamId = smallestTeam(serverGameContext);
 			const joinEvent: JoinEvent = { type: 'join', data: { id: playerId, name, team: smallestTeamId } };
 			const serverEventToEmit = batch(executeServerGameEvent(serverGameContext, joinEvent, delayedEmitAll));
-			log('post execute join final result', serverEventToEmit);
 			if (serverEventToEmit) {
 				emitAll(serverEventToEmit);
 			}
@@ -561,7 +560,6 @@ export function setupWsServer(httpServer: HttpServer) {
 				data: playerId,
 			};
 			const serverEventToEmit = batch(executeServerGameEvent(serverGameContext, reconnectEvent, delayedEmitAll));
-			log('post execute join final result', serverEventToEmit);
 			if (serverEventToEmit) {
 				emitAll(serverEventToEmit);
 			}
@@ -582,43 +580,29 @@ export function setupWsServer(httpServer: HttpServer) {
 				log(`deleting game ${gameId} because last player left`);
 				delete serverContext[gameId];
 			} else {
-				// notify other players that this player left
 				const leftEvent: LeftEvent = { type: 'left', data: playerId };
+				// players can only leave in the pre-game phase of
+				// the game
 				if (canAdvanceServerGame(serverGameContext, leftEvent)) {
-					advanceServerGame(serverGameContext, leftEvent);
-					// player leaving can also trigger team rebalance
-					// if the game hasn't started yet
-					const joinTeamEvents: JoinTeamEvent[] = [];
-					if (serverGameContext.gameState.phase === 'pre-game') {
-						const rebalanceEvents: JoinTeamEvent[] = rebalanceTeams(serverGameContext);
-						for (let rebalanceEvent of rebalanceEvents) {
-							if (canAdvanceServerGame(serverGameContext, rebalanceEvent)) {
-								advanceServerGame(serverGameContext, rebalanceEvent);
-								joinTeamEvents.push(rebalanceEvent);
-							}
-						}
-					}
-					// if this player joining triggered a rebalance send
-					// a batch event down
-					if (joinTeamEvents.length > 0) {
-						const batchEvent: BatchEvent = {
-							type: 'batch',
-							data: [leftEvent, ...joinTeamEvents],
-						};
-						emitAll(batchEvent);
-					} else {
-						emitAll(leftEvent);
+					const serverEventToEmit = batch(
+						executeServerGameEvent(serverGameContext, leftEvent, delayedEmitAll),
+					);
+					if (serverEventToEmit) {
+						emitAll(serverEventToEmit);
 					}
 				} else {
-					// player cannot "leave" since game has alrady started
-					// but we should inform other players that they disconnected
+					// if player cannot leave, because we are past the
+					// pre-game phase of the game, then mark them
+					// as disconnected
 					const disconnectEvent: PlayerDisconnectEvent = {
 						type: 'disconnect',
 						data: playerId,
 					};
-					if (canAdvanceServerGame(serverGameContext, disconnectEvent)) {
-						advanceServerGame(serverGameContext, disconnectEvent);
-						emitAll(disconnectEvent);
+					const serverEventToEmit = batch(
+						executeServerGameEvent(serverGameContext, disconnectEvent, delayedEmitAll),
+					);
+					if (serverEventToEmit) {
+						emitAll(serverEventToEmit);
 					}
 				}
 			}
@@ -628,43 +612,13 @@ export function setupWsServer(httpServer: HttpServer) {
 		// players in game, including back to player
 		// who sent us this event
 		socket.on('event', (clientEvent: ClientEvent) => {
-			let gameEvents: GameEvent[] = [];
-			if (clientEvent.type === 'batch') {
-				gameEvents = clientEvent.data;
+			const serverEventToEmit = batch(
+				executeClientEvent(playerId, serverGameContext, clientEvent, delayedEmitAll),
+			);
+			if (serverEventToEmit) {
+				emitAll(serverEventToEmit);
 			} else {
-				gameEvents.push(clientEvent);
-			}
-			let gameEventsToEmit = [];
-			for (let gameEvent of gameEvents) {
-				// check that the player who produced this event has the permission
-				// to produce it, and check that it will advance the game state
-				if (
-					hasPermission(playerId, serverGameContext, gameEvent) &&
-					canAdvanceServerGame(serverGameContext, gameEvent)
-				) {
-					advanceServerGame(serverGameContext, gameEvent);
-					gameEventsToEmit.push(gameEvent);
-					if (hasResponse(serverGameContext, gameEvent)) {
-						let responseEvents = generateResponse(serverGameContext, gameEvent, delayedEmitAll);
-						for (let responseEvent of responseEvents) {
-							if (canAdvanceServerGame(serverGameContext, responseEvent)) {
-								advanceServerGame(serverGameContext, responseEvent);
-								gameEventsToEmit.push(responseEvent);
-							}
-						}
-					}
-				} else {
-					log(`player ${playerId} in game ${gameId} sent weird event`, gameEvent);
-				}
-			}
-			if (gameEventsToEmit.length === 1) {
-				emitAll(gameEventsToEmit[0]);
-			} else if (gameEventsToEmit.length > 1) {
-				let batchEvent: BatchEvent = {
-					type: 'batch',
-					data: gameEventsToEmit,
-				};
-				emitAll(batchEvent);
+				log(`player ${playerId} in game ${gameId} sent weird event`, clientEvent);
 			}
 		});
 	});
@@ -739,20 +693,18 @@ function executeServerGameEvent(
 	gameEvent: GameEvent,
 	delayedEmit: DelayedEventEmitter,
 ): GameEvent[] {
-	log('checking', gameEvent);
+	// log('checking', gameEvent);
 	const executedEvents: GameEvent[] = [];
 	if (canAdvanceServerGame(serverGameContext, gameEvent)) {
-		log('executing', gameEvent);
+		// log('executing', gameEvent);
 		advanceServerGame(serverGameContext, gameEvent);
 		executedEvents.push(gameEvent);
 		if (hasResponse(serverGameContext, gameEvent)) {
-			log('getting response to', gameEvent);
+			// log('getting response to', gameEvent);
 			const responseEvents = generateResponse(serverGameContext, gameEvent, delayedEmit);
-			// log('response events', responseEvents);
 			executedEvents.push(...executeServerGameEvents(serverGameContext, responseEvents, delayedEmit));
 		}
 	}
-	// log('executed events', executedEvents);
 	return executedEvents;
 }
 
