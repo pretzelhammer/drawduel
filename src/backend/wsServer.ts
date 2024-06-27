@@ -419,7 +419,8 @@ function generateResponse(
 			});
 		}
 	} else if (gameEvent.type === 'join' || gameEvent.type === 'left') {
-		// TODO copy team rebalancing code here
+		const rebalanceEvents: JoinTeamEvent[] = rebalanceTeams(serverGameContext);
+		responseEvents.push(...rebalanceEvents);
 	}
 	return responseEvents;
 }
@@ -548,32 +549,10 @@ export function setupWsServer(httpServer: HttpServer) {
 			// except for the just connected player
 			const smallestTeamId = smallestTeam(serverGameContext);
 			const joinEvent: JoinEvent = { type: 'join', data: { id: playerId, name, team: smallestTeamId } };
-			if (canAdvanceServerGame(serverGameContext, joinEvent)) {
-				advanceServerGame(serverGameContext, joinEvent);
-				// only rebalance teams before game has started,
-				// as well as moving players around this operation
-				// can also create or delete teams
-				const joinTeamEvents: JoinTeamEvent[] = [];
-				if (serverGameContext.gameState.phase === 'pre-game') {
-					const rebalanceEvents: JoinTeamEvent[] = rebalanceTeams(serverGameContext);
-					for (let rebalanceEvent of rebalanceEvents) {
-						if (canAdvanceServerGame(serverGameContext, rebalanceEvent)) {
-							advanceServerGame(serverGameContext, rebalanceEvent);
-							joinTeamEvents.push(rebalanceEvent);
-						}
-					}
-				}
-				// if this player joining triggered a rebalance send
-				// a batch event down
-				if (joinTeamEvents.length > 0) {
-					const batchEvent: BatchEvent = {
-						type: 'batch',
-						data: [joinEvent, ...joinTeamEvents],
-					};
-					emitAll(batchEvent);
-				} else {
-					emitAll(joinEvent);
-				}
+			const serverEventToEmit = batch(executeServerGameEvent(serverGameContext, joinEvent, delayedEmitAll));
+			log('post execute join final result', serverEventToEmit);
+			if (serverEventToEmit) {
+				emitAll(serverEventToEmit);
 			}
 		} else {
 			// emit reconnected event for existing player
@@ -581,9 +560,10 @@ export function setupWsServer(httpServer: HttpServer) {
 				type: 'reconnect',
 				data: playerId,
 			};
-			if (canAdvanceServerGame(serverGameContext, reconnectEvent)) {
-				advanceServerGame(serverGameContext, reconnectEvent);
-				emitAll(reconnectEvent);
+			const serverEventToEmit = batch(executeServerGameEvent(serverGameContext, reconnectEvent, delayedEmitAll));
+			log('post execute join final result', serverEventToEmit);
+			if (serverEventToEmit) {
+				emitAll(serverEventToEmit);
 			}
 		}
 
@@ -759,15 +739,20 @@ function executeServerGameEvent(
 	gameEvent: GameEvent,
 	delayedEmit: DelayedEventEmitter,
 ): GameEvent[] {
+	log('checking', gameEvent);
 	const executedEvents: GameEvent[] = [];
 	if (canAdvanceServerGame(serverGameContext, gameEvent)) {
+		log('executing', gameEvent);
 		advanceServerGame(serverGameContext, gameEvent);
 		executedEvents.push(gameEvent);
 		if (hasResponse(serverGameContext, gameEvent)) {
+			log('getting response to', gameEvent);
 			const responseEvents = generateResponse(serverGameContext, gameEvent, delayedEmit);
+			// log('response events', responseEvents);
 			executedEvents.push(...executeServerGameEvents(serverGameContext, responseEvents, delayedEmit));
 		}
 	}
+	// log('executed events', executedEvents);
 	return executedEvents;
 }
 
@@ -776,14 +761,13 @@ function executeServerGameEvent(
  * @param serverEvent unchecked unexecuted unemitted event (could be batch event)
  */
 function executeServerEvent(
-	playerId: PlayerId,
 	serverGameContext: ServerGameContext,
 	serverEvent: ServerEvent,
 	delayedEmit: DelayedEventEmitter,
 ): GameEvent[] {
 	// if batch event
 	if (serverEvent.type === 'batch') {
-		return executeClientGameEvents(playerId, serverGameContext, serverEvent.data, delayedEmit);
+		return executeServerGameEvents(serverGameContext, serverEvent.data, delayedEmit);
 	}
 	if (
 		serverEvent.type === 'server-error' ||
@@ -793,7 +777,7 @@ function executeServerEvent(
 		throw new Error(`server event type ${serverEvent.type} is not executable on the server`);
 	}
 	// if regular single game event
-	return executeClientGameEvent(playerId, serverGameContext, serverEvent, delayedEmit);
+	return executeServerGameEvent(serverGameContext, serverEvent, delayedEmit);
 }
 
 /**
