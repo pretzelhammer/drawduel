@@ -7,7 +7,6 @@ import {
 	type ServerGameContext,
 	type ServerPlayerState,
 	initServerGameContext,
-	ServerState,
 } from 'src/backend/serverContext.ts';
 import {
 	GameEvent,
@@ -196,17 +195,17 @@ function hasPermission(playerId: PlayerId, gameId: GameId, gameEvent: GameEvent)
 /**
  * checks if given game event can advance the specific game on the server
  */
-function canAdvanceServerGame(gameId: GameId, gameEvent: GameEvent): boolean {
-	return canAdvance(serverContext[gameId].gameState, gameEvent);
+function canAdvanceServerGame(serverGameContext: ServerGameContext, gameEvent: GameEvent): boolean {
+	return canAdvance(serverGameContext.gameState, gameEvent);
 }
 
 /**
  * advances game state on the server given the game event
  */
-function advanceServerGame(gameId: GameId, gameEvent: GameEvent) {
-	const currentGameState = serverContext[gameId].gameState;
+function advanceServerGame(serverGameContext: ServerGameContext, gameEvent: GameEvent) {
+	const currentGameState = serverGameContext.gameState;
 	const nextGameState = advance(currentGameState, gameEvent);
-	serverContext[gameId].gameState = nextGameState;
+	serverGameContext.gameState = nextGameState;
 }
 
 function nextRoundEvents(serverGameContext: ServerGameContext, emitAll: (event: ServerEvent) => void): GameEvent[] {
@@ -310,8 +309,8 @@ function generateResponse(
 				const phaseEvents = nextPhaseEvents(serverGameContext, emitAll);
 				const toEmit: GameEvent[] = [];
 				for (let phaseEvent of phaseEvents) {
-					if (canAdvanceServerGame(serverGameContext.gameState.id, phaseEvent)) {
-						advanceServerGame(serverGameContext.gameState.id, phaseEvent);
+					if (canAdvanceServerGame(serverGameContext, phaseEvent)) {
+						advanceServerGame(serverGameContext, phaseEvent);
 						toEmit.push(phaseEvent);
 					}
 				}
@@ -455,8 +454,8 @@ export function setupWsServer(httpServer: HttpServer) {
 			// except for the just connected player
 			const smallestTeamId = smallestTeam(serverGameContext.gameState);
 			const joinEvent: JoinEvent = { type: 'join', data: { id: playerId, name, team: smallestTeamId } };
-			if (canAdvanceServerGame(gameId, joinEvent)) {
-				advanceServerGame(gameId, joinEvent);
+			if (canAdvanceServerGame(serverGameContext, joinEvent)) {
+				advanceServerGame(serverGameContext, joinEvent);
 				// only rebalance teams before game has started,
 				// as well as moving players around this operation
 				// can also create or delete teams
@@ -464,8 +463,8 @@ export function setupWsServer(httpServer: HttpServer) {
 				if (serverGameContext.gameState.phase === 'pre-game') {
 					const rebalanceEvents: JoinTeamEvent[] = rebalanceTeams(serverGameContext.gameState);
 					for (let rebalanceEvent of rebalanceEvents) {
-						if (canAdvanceServerGame(gameId, rebalanceEvent)) {
-							advanceServerGame(gameId, rebalanceEvent);
+						if (canAdvanceServerGame(serverGameContext, rebalanceEvent)) {
+							advanceServerGame(serverGameContext, rebalanceEvent);
 							joinTeamEvents.push(rebalanceEvent);
 						}
 					}
@@ -488,8 +487,8 @@ export function setupWsServer(httpServer: HttpServer) {
 				type: 'reconnect',
 				data: playerId,
 			};
-			if (canAdvanceServerGame(gameId, reconnectEvent)) {
-				advanceServerGame(gameId, reconnectEvent);
+			if (canAdvanceServerGame(serverGameContext, reconnectEvent)) {
+				advanceServerGame(serverGameContext, reconnectEvent);
 				emitAll(reconnectEvent);
 			}
 		}
@@ -511,16 +510,16 @@ export function setupWsServer(httpServer: HttpServer) {
 			} else {
 				// notify other players that this player left
 				const leftEvent: LeftEvent = { type: 'left', data: playerId };
-				if (canAdvanceServerGame(gameId, leftEvent)) {
-					advanceServerGame(gameId, leftEvent);
+				if (canAdvanceServerGame(serverGameContext, leftEvent)) {
+					advanceServerGame(serverGameContext, leftEvent);
 					// player leaving can also trigger team rebalance
 					// if the game hasn't started yet
 					const joinTeamEvents: JoinTeamEvent[] = [];
 					if (serverGameContext.gameState.phase === 'pre-game') {
 						const rebalanceEvents: JoinTeamEvent[] = rebalanceTeams(serverGameContext.gameState);
 						for (let rebalanceEvent of rebalanceEvents) {
-							if (canAdvanceServerGame(gameId, rebalanceEvent)) {
-								advanceServerGame(gameId, rebalanceEvent);
+							if (canAdvanceServerGame(serverGameContext, rebalanceEvent)) {
+								advanceServerGame(serverGameContext, rebalanceEvent);
 								joinTeamEvents.push(rebalanceEvent);
 							}
 						}
@@ -543,8 +542,8 @@ export function setupWsServer(httpServer: HttpServer) {
 						type: 'disconnect',
 						data: playerId,
 					};
-					if (canAdvanceServerGame(gameId, disconnectEvent)) {
-						advanceServerGame(gameId, disconnectEvent);
+					if (canAdvanceServerGame(serverGameContext, disconnectEvent)) {
+						advanceServerGame(serverGameContext, disconnectEvent);
 						emitAll(disconnectEvent);
 					}
 				}
@@ -565,14 +564,14 @@ export function setupWsServer(httpServer: HttpServer) {
 			for (let gameEvent of gameEvents) {
 				// check that the player who produced this event has the permission
 				// to produce it, and check that it will advance the game state
-				if (hasPermission(playerId, gameId, gameEvent) && canAdvanceServerGame(gameId, gameEvent)) {
-					advanceServerGame(gameId, gameEvent);
+				if (hasPermission(playerId, gameId, gameEvent) && canAdvanceServerGame(serverGameContext, gameEvent)) {
+					advanceServerGame(serverGameContext, gameEvent);
 					gameEventsToEmit.push(gameEvent);
 					if (hasResponse(gameEvent)) {
 						let responseEvents = generateResponse(serverGameContext, gameEvent, emitAll);
 						for (let responseEvent of responseEvents) {
-							if (canAdvanceServerGame(gameId, responseEvent)) {
-								advanceServerGame(gameId, responseEvent);
+							if (canAdvanceServerGame(serverGameContext, responseEvent)) {
+								advanceServerGame(serverGameContext, responseEvent);
 								gameEventsToEmit.push(responseEvent);
 							}
 						}
@@ -592,4 +591,12 @@ export function setupWsServer(httpServer: HttpServer) {
 			}
 		});
 	});
+}
+
+function executeEvent(
+	serverGameContext: ServerGameContext,
+	gameEvent: GameEvent,
+	emitAll: (event: ServerEvent) => void,
+) {
+	// if (canAdvanceServerGame(serverGameContext))
 }
