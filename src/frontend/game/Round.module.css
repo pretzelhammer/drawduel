@@ -1,0 +1,36 @@
+.stage {
+	display: flex;
+	column-gap: 3rem;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+}
+
+.word-timer {
+	display: flex;
+	justify-content: space-between;
+	width: 600px;
+	margin-right: 3rem;
+}
+
+.previews {
+	display: flex;
+	flex-direction: column;
+	row-gap: 0.5rem;
+	border-left: solid 2px gray;
+	padding-left: 3rem;
+}
+
+.preview-header {
+	display: flex;
+	justify-content: space-between;
+}
+
+
+.canvas {
+	height: 133px;
+	width: 200px;
+	border: solid 1px gray;
+}

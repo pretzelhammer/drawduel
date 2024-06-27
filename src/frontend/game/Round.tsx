@@ -1,6 +1,7 @@
 import { type FunctionalComponent } from 'preact';
 import { useState } from 'preact/hooks';
 import { DrawStage, Mode } from 'src/frontend/components/DrawStage.tsx';
+import classes from 'src/frontend/game/Round.module.css';
 
 export interface TeamPreview {
 	readonly teamName: string;
@@ -20,20 +21,39 @@ export const Round: FunctionalComponent<RoundProps> = ({ teamName, teamPreviews 
 	const [guess, setGuess] = useState('');
 	const time = '1:00';
 	// TODO: kirill I need a function that sends to server...
+
+	const word = mode === Mode.Draw ? 'word' : '_ _ _ _';
 	const onDraw = () => {};
+
+	const previews =
+		teamPreviews.length > 0 ? (
+			<div className={classes['previews']}>
+				{teamPreviews.map((preview) => (
+					<div class={classes['preview']}>
+						<div class={classes['preview-header']}>
+							<h3>{preview.teamName}</h3>
+							<h3>✏️ {preview.drawer}</h3>
+						</div>
+						<div class={classes['canvas']}></div>
+					</div>
+				))}
+			</div>
+		) : null;
+
 	return (
 		<>
-			<div>
+			<div class={classes['stage']}>
 				<div>
-					<h2>{time}</h2>
-					<h3>{teamName}</h3>
+					<div className={classes['header']}>
+						<div className={classes['word-timer']}>
+							<h2>{word}</h2>
+							<h2>{time}</h2>
+						</div>
+						<h2>{teamName}</h2>
+					</div>
+					<DrawStage mode={mode} onGuess={setGuess} onDraw={onDraw} />
 				</div>
-				<DrawStage mode={mode} onGuess={setGuess} onDraw={onDraw} />
-			</div>
-			<div class="previews">
-				{teamPreviews.map(() => (
-					<div>TODO</div>
-				))}
+				{previews}
 			</div>
 			<button onClick={() => setMode(mode === Mode.Guess ? Mode.Draw : Mode.Guess)}>toggle modes</button>
 		</>

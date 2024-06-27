@@ -53,7 +53,7 @@ export const DrawStage: FunctionalComponent<DrawStageProps> = ({ mode, onDraw, o
 		brush: Brush.Pencil,
 	});
 	const canvasDimensions = {
-		width: 400,
+		width: 600,
 		height: 400,
 	};
 	const colors = Object.values(Color);
