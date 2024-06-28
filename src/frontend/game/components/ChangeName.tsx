@@ -17,7 +17,7 @@ export const ChangeName: FunctionalComponent = () => {
 
 	const changeName = () => {
 		dispatchClientEvent({
-			type: 'change-player-name',
+			type: 'name',
 			data: {
 				id: myId,
 				name: inputValue,
@@ -27,7 +27,7 @@ export const ChangeName: FunctionalComponent = () => {
 		// 	type: 'batch',
 		// 	data: [
 		// 		{
-		// 			type: 'change-player-name',
+		// 			type: 'name',
 		// 			data: {
 		// 				id: myId,
 		// 				name: inputValue,

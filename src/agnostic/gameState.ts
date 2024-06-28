@@ -52,17 +52,21 @@ export interface RoundTeam {
 	guesses: string[]; // TODO make array of guess events
 }
 
+export type Word = string;
+
 export interface WordChoices {
-	easy: string;
-	hard: string;
+	easy: Word;
+	hard: Word;
 }
+
+export type Difficulty = 'easy' | 'hard';
 
 export interface ChosenWord {
-	content: string;
-	difficulty: string;
+	content: Word;
+	difficulty: Difficulty;
 }
 
-export type RoundPhaseType = 'pick-word' | 'pre-play' | 'play' | 'post-round';
+export type RoundPhaseType = 'choose-word' | 'pre-play' | 'play' | 'post-round';
 
 export type LightningRoundPhaseType = 'pre-play' | 'play' | 'post-round';
 
@@ -148,7 +152,7 @@ export interface IncPlayerScoreEvent {
  * change player's name
  */
 export interface ChangePlayerNameEvent {
-	type: 'change-player-name';
+	type: 'name';
 	data: {
 		id: PlayerId;
 		name: string;
@@ -215,6 +219,14 @@ export interface NewRoundEvent {
 }
 
 /**
+ * chooser chooses word
+ */
+export interface ChooseEvent {
+	type: 'choose';
+	data: Word;
+}
+
+/**
  * union type representing all possible types
  * of game events
  */
@@ -230,6 +242,7 @@ export type GameEvent =
 	| PlayerDisconnectEvent
 	| TimerEvent
 	| NewRoundEvent
+	| ChooseEvent
 	| PlayerReadyEvent;
 
 export function initGameState(gameId: GameId): GameState {
@@ -257,7 +270,7 @@ export function generateRound(teamIds: TeamId[], drawers: PlayerId[], chooser: P
 		};
 	}
 	return {
-		phase: 'pick-word',
+		phase: 'choose-word',
 		drawers,
 		chooser,
 		choices,
@@ -285,7 +298,7 @@ export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean 
 	} else if (gameEvent.type === 'inc-player-score') {
 		// can only increase the score of players who exist
 		return !!gameState.players[gameEvent.data.id];
-	} else if (gameEvent.type === 'change-player-name') {
+	} else if (gameEvent.type === 'name') {
 		// can only change name of player who exists
 		const player = gameState.players[gameEvent.data.id];
 		if (!player) {
@@ -333,10 +346,36 @@ export function canAdvance(gameState: GameState, gameEvent: GameEvent): boolean 
 		// max number of rounds
 		return gameState.round < MAX_ROUND_ID;
 	} else if (gameEvent.type === 'round-phase') {
-		if (gameState.round >= 0 && gameState.round <= MAX_ROUND_ID) {
-			const currentPhase = gameState.rounds[gameState.round].phase;
-			return currentPhase !== gameEvent.data;
+		if (gameState.phase !== 'rounds') {
+			return false;
 		}
+		if (gameState.round < 0 || gameState.round > MAX_ROUND_ID) {
+			return false;
+		}
+		const currentPhase = gameState.rounds[gameState.round].phase;
+		return currentPhase !== gameEvent.data;
+	} else if (gameEvent.type === 'choose') {
+		if (gameState.phase !== 'rounds') {
+			return false;
+		}
+		if (gameState.round < 0 || gameState.round > MAX_ROUND_ID) {
+			return false;
+		}
+		const currentRound = gameState.rounds[gameState.round];
+		if (currentRound.phase !== 'choose-word') {
+			return false;
+		}
+		const validChoice =
+			gameEvent.data === currentRound.choices.easy || gameEvent.data === currentRound.choices.hard;
+		if (!validChoice) {
+			return false;
+		}
+		// even tho if the chooser chooses the default choice and
+		// this event wouldn't technically modify the game state,
+		// we still need this event to reach the backend so it
+		// can advance the round phase as a side-effect
+		// return gameEvent.data !== currentRound.word.content;
+		return true;
 	}
 	return true;
 }
@@ -375,7 +414,7 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 		player.score += gameEvent.data.score;
 		// also increase score of player's team
 		gameState.teams[player.team].score += gameEvent.data.score;
-	} else if (gameEvent.type === 'change-player-name') {
+	} else if (gameEvent.type === 'name') {
 		gameState.players[gameEvent.data.id].name = gameEvent.data.name;
 	} else if (gameEvent.type === 'game-phase') {
 		// change game phase
@@ -446,6 +485,16 @@ export function advance(gameState: GameState, gameEvent: GameEvent): GameState {
 		currentRound.phase = gameEvent.data;
 		// reset timer
 		gameState.timer = 0;
+	} else if (gameEvent.type === 'choose') {
+		const currentRound = gameState.rounds[gameState.round];
+		let difficulty: Difficulty = 'easy';
+		if (gameEvent.data === currentRound.choices.hard) {
+			difficulty = 'hard';
+		}
+		currentRound.word = {
+			content: gameEvent.data,
+			difficulty,
+		};
 	}
 	return gameState;
 }
@@ -469,13 +518,13 @@ export function nextGamePhase(gamePhase: GamePhase): GamePhase {
 export function nextRoundPhase(roundPhase: RoundPhaseType): RoundPhaseType {
 	// round phases cycle, so post-round goes back to intro
 	switch (roundPhase) {
-		case 'pick-word':
+		case 'choose-word':
 			return 'pre-play';
 		case 'pre-play':
 			return 'play';
 		case 'play':
 			return 'post-round';
 		case 'post-round':
-			return 'pick-word';
+			return 'choose-word';
 	}
 }

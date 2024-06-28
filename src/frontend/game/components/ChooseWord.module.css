@@ -1,0 +1,30 @@
+.word-choices {
+	display: grid;
+	grid-template-columns: 1fr 1fr; /* 2 columns */
+	grid-template-rows: auto auto; /* 2 rows */
+	row-gap: 16px;
+	column-gap: 32px;
+}
+.label {
+	grid-column: 1 / 3; /* Span 2 columns */
+	grid-row: 1; /* Take up the entire first row */
+	text-align: center;
+}
+.easy {
+	grid-column: 1; /* First column of the second row */
+	grid-row: 2; /* Second row */
+}
+.hard {
+	grid-column: 2; /* Second column of the second row */
+	grid-row: 2; /* Second row */
+}
+
+.easy,
+.hard {
+	text-align: center;
+}
+
+.list {
+	list-style-type: none;
+	padding: 0;
+}

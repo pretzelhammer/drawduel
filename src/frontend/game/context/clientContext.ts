@@ -86,7 +86,7 @@ function initClientState(): ClientState {
  * the game event has already been applied to it
  */
 export function hasSideEffect(clientContext: ClientContext, gameEvent: GameEvent): boolean {
-	if (gameEvent.type === 'change-player-name') {
+	if (gameEvent.type === 'name') {
 		const myId = clientContext.clientState.player.id;
 		return myId === gameEvent.data.id;
 	}
@@ -101,7 +101,7 @@ export function hasSideEffect(clientContext: ClientContext, gameEvent: GameEvent
  * the game event has already been applied to it
  */
 export function performSideEffect(clientContext: ClientContext, gameEvent: GameEvent): ClientState {
-	if (gameEvent.type !== 'change-player-name') {
+	if (gameEvent.type !== 'name') {
 		return clientContext.clientState;
 	}
 	clientContext.clientState.player.name = gameEvent.data.name;
@@ -127,7 +127,7 @@ export function performSideEffect(clientContext: ClientContext, gameEvent: GameE
  * more server checks)
  */
 export function canOptimisticallyRender(event: ClientEvent): boolean {
-	return event.type === 'change-player-name' || event.type === 'ready';
+	return event.type === 'name' || event.type === 'ready';
 }
 
 function fetchPersonas(): ClientPlayerPersonas {

@@ -23,6 +23,8 @@ import {
 	type GameId,
 	type PlayerId,
 	type TeamId,
+	RoundPhaseType,
+	ChangeRoundPhaseEvent,
 } from 'src/agnostic/gameState.ts';
 import { type ServerEvent, type ClientError, type ClientEvent } from 'src/agnostic/events.ts';
 import { validGameId, validName, validPass, validPlayerId } from 'src/agnostic/validation';
@@ -30,7 +32,12 @@ import { type Maybe } from 'src/agnostic/types.ts';
 import { pickRandomItem, randomWordChoices } from 'src/agnostic/random.ts';
 import { type Ms, msUntil, now, secondsFromNow, secondsToMs } from 'src/agnostic/time.ts';
 import { isFunction } from 'lodash-es';
-import { MAX_ROUND_ID, UNREADY_PLAYER_WAIT_SECS, WORD_CHOICE_WAIT_SECS } from 'src/agnostic/constants.ts';
+import {
+	MAX_ROUND_ID,
+	PRE_PLAY_WAIT_SECS,
+	UNREADY_PLAYER_WAIT_SECS,
+	WORD_CHOICE_WAIT_SECS,
+} from 'src/agnostic/constants.ts';
 
 /**
  * README
@@ -218,7 +225,7 @@ function hasPermission(playerId: PlayerId, serverGameContext: ServerGameContext,
 		// to power to increase or decrease scores is the server
 		// so we may change this later
 		return playerId === gameEvent.data.id;
-	} else if (gameEvent.type === 'change-player-name') {
+	} else if (gameEvent.type === 'name') {
 		// players can only change their own names
 		return playerId === gameEvent.data.id;
 	} else if (gameEvent.type === 'game-phase') {
@@ -289,18 +296,29 @@ function nextRoundEvents(serverGameContext: ServerGameContext, delayedEmit: Dela
 		},
 	};
 	nextRoundEvents.push(newRound);
-	const endsAt = secondsFromNow(WORD_CHOICE_WAIT_SECS);
+	const wordChoiceEndsAt = secondsFromNow(WORD_CHOICE_WAIT_SECS);
 	nextRoundEvents.push({
 		type: 'timer',
-		data: endsAt,
+		data: wordChoiceEndsAt,
 	});
-	serverGameContext.serverState.timerId = delayedEmit(
-		{
+	serverGameContext.serverState.timerId = delayedEmit((emit) => {
+		clearTimeout(serverGameContext.serverState.timerId);
+		const prePlayEvents: GameEvent[] = [];
+		prePlayEvents.push({
 			type: 'round-phase',
 			data: 'pre-play',
-		},
-		endsAt - now(),
-	);
+		});
+		const prePlayEndsAt = secondsFromNow(PRE_PLAY_WAIT_SECS);
+		prePlayEvents.push({
+			type: 'timer',
+			data: prePlayEndsAt,
+		});
+		const event = batch(executeServerGameEvents(serverGameContext, prePlayEvents, delayedEmit));
+		if (event) {
+			emit(event);
+		}
+		// TODO set timer to end pre-play
+	}, wordChoiceEndsAt - now());
 	return nextRoundEvents;
 }
 
@@ -334,6 +352,7 @@ function nextPhaseEvents(serverGameContext: ServerGameContext, delayedEmit: Dela
 /**
  * true if the game event causes the server to generate
  * additional game events, called response events
+ * ONLY IF the game event caused a change in the game state
  * example: when a player readies, the server needs to set
  * and emit a timer update, and when the timer expires
  * or all players ready then game phase advances
@@ -358,6 +377,34 @@ function hasResponse(serverGameContext: ServerGameContext, gameEvent: GameEvent)
 	}
 	return false;
 }
+
+// /**
+//  *
+//  * uhhh, maybe come back to this, or not
+//  *
+//  * true if the game event causes the server to generate
+//  * additional game events, called response events
+//  * EVEN IF the game event DID NOT cause a change in
+//  * the game state
+//  * example: choosers chooses the easy word, but the easy word
+//  * is already the default word choice, regardless we
+//  * need to end the choose-word round phase timer and move
+//  * to the pre-play phase
+//  */
+// function hasSideEffectResponse(serverGameContext: ServerGameContext, gameEvent: GameEvent): boolean {
+// 	if (gameEvent.type === 'choose') {
+// 		// if a choice has been made, even if it's the same
+// 		// as the default word choice, we need to advance
+// 		// the round phase
+// 		const gameState = serverGameContext.gameState;
+// 		if (gameState.phase !== 'rounds') {
+// 			return false;
+// 		}
+// 		// blah blah blah
+// 		return true;
+// 	}
+// 	return false;
+// }
 
 /**
  * returns unchecked unexecuted unemitted events
@@ -704,6 +751,11 @@ function executeServerGameEvent(
 			executedEvents.push(...executeServerGameEvents(serverGameContext, responseEvents, delayedEmit));
 		}
 	}
+	// maybe come back to this... or dont
+	// else if (hasSideEffectResponse(serverGameContext, gameEvent)) {
+	// 	const responseEvents = generateResponse(serverGameContext, gameEvent, delayedEmit);
+	// 	executedEvents.push(...executeServerGameEvents(serverGameContext, responseEvents, delayedEmit));
+	// }
 	return executedEvents;
 }
 

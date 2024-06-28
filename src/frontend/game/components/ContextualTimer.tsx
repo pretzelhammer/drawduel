@@ -24,9 +24,9 @@ export const ContextualTimer: FunctionalComponent = () => {
 	} else if (gamePhase === 'rounds') {
 		let roundId = clientContext.gameState.round;
 		let currentRound = clientContext.gameState.rounds[roundId];
-		if (currentRound.phase === 'pick-word') {
+		if (currentRound.phase === 'choose-word') {
 			let chooserPlayer = clientContext.gameState.players[currentRound.chooser];
-			message = `${chooserPlayer.name} is picking a word up to`;
+			message = `${chooserPlayer.name} is choosing a word in`;
 		} else if (currentRound.phase === 'pre-play') {
 			message = `get ready to start ${roleToVerb(me.role)} in`;
 		} else if (currentRound.phase === 'post-round') {

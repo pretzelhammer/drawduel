@@ -1,11 +1,10 @@
 import { type FunctionalComponent } from 'preact';
 import { PlayerList } from 'src/frontend/game/components/PlayerList.tsx';
-import { IncreaseMyScore } from 'src/frontend/game/components/IncreaseMyScore.tsx';
-import { ChangeName } from 'src/frontend/game/components/ChangeName.tsx';
 import { useClientContext } from 'src/frontend/game/context/ClientContextProvider.tsx';
 import { PrintClientContext } from 'src/frontend/game/components/PrintClientContext.tsx';
 import { ContextualTimer } from 'src/frontend/game/components/ContextualTimer.tsx';
 import { PrintConstants } from 'src/frontend/game/components/PrintConstants.tsx';
+import { ChooseWord } from 'src/frontend/game/components/ChooseWord.tsx';
 
 export const RoundsPhase: FunctionalComponent = () => {
 	const { clientContext } = useClientContext();
@@ -18,9 +17,8 @@ export const RoundsPhase: FunctionalComponent = () => {
 			<h3>
 				<ContextualTimer />
 			</h3>
+			<ChooseWord />
 			<PlayerList />
-			<IncreaseMyScore />
-			<ChangeName />
 			<PrintClientContext />
 			<PrintConstants />
 		</>
