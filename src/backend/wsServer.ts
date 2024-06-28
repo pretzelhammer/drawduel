@@ -287,8 +287,7 @@ function advanceServerGame(serverGameContext: ServerGameContext, gameEvent: Game
 /**
  * returns unchecked unexecuted unemitted events
  */
-function nextRoundEvents(serverGameContext: ServerGameContext, delayedEmit: DelayedEventEmitter): GameEvent[] {
-	// const nextRoundEvents: GameEvent[] = [];
+function nextRoundEvents(serverGameContext: ServerGameContext): GameEvent[] {
 	const drawers = selectDrawersForRound(serverGameContext);
 	const chooser = pickRandomItem(drawers);
 	const choices = randomWordChoices();
@@ -306,7 +305,7 @@ function nextRoundEvents(serverGameContext: ServerGameContext, delayedEmit: Dela
 /**
  * returns unchecked unexecuted unemitted events
  */
-function nextPhaseEvents(serverGameContext: ServerGameContext, delayedEmit: DelayedEventEmitter): GameEvent[] {
+function nextPhaseEvents(serverGameContext: ServerGameContext): GameEvent[] {
 	const gameState = serverGameContext.gameState;
 	const currentPhase = gameState.phase;
 	const currentRoundId = gameState.round;
@@ -317,10 +316,10 @@ function nextPhaseEvents(serverGameContext: ServerGameContext, delayedEmit: Dela
 			data: nextGamePhase(serverGameContext.gameState.phase),
 		});
 		// create first round
-		nextPhaseEvents.push(...nextRoundEvents(serverGameContext, delayedEmit));
+		nextPhaseEvents.push(...nextRoundEvents(serverGameContext));
 	} else if (currentPhase === 'rounds' && currentRoundId < MAX_ROUND_ID) {
 		// create next round
-		nextPhaseEvents.push(...nextRoundEvents(serverGameContext, delayedEmit));
+		nextPhaseEvents.push(...nextRoundEvents(serverGameContext));
 	} else {
 		nextPhaseEvents.push({
 			type: 'game-phase',
@@ -399,7 +398,7 @@ function generateResponse(
 		// the timer because new players have readied/disconnected
 		clearTimeout(serverGameContext.serverState.timerId);
 		if (unreadyConnectedPlayers === 0) {
-			responseEvents.push(...nextPhaseEvents(serverGameContext, delayedEmit));
+			responseEvents.push(...nextPhaseEvents(serverGameContext));
 		} else {
 			// auto-start next phase without waiting for all players to ready
 			const fullDuration = secondsToMs(unreadyConnectedPlayers * UNREADY_PLAYER_WAIT_SECS);
@@ -414,11 +413,11 @@ function generateResponse(
 			const endsAt = serverGameContext.serverState.recalcTimerFrom + fullDuration;
 			const remainingDuration = msUntil(endsAt);
 			if (remainingDuration <= 0) {
-				responseEvents.push(...nextPhaseEvents(serverGameContext, delayedEmit));
+				responseEvents.push(...nextPhaseEvents(serverGameContext));
 			} else {
 				serverGameContext.serverState.timerId = delayedEmit((emit) => {
 					clearTimeout(serverGameContext.serverState.timerId);
-					const phaseEvents = nextPhaseEvents(serverGameContext, delayedEmit);
+					const phaseEvents = nextPhaseEvents(serverGameContext);
 					const event = batch(executeServerGameEvents(serverGameContext, phaseEvents, delayedEmit));
 					if (event) {
 						emit(event);
