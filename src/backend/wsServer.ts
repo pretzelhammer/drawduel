@@ -35,6 +35,7 @@ import { isFunction } from 'lodash-es';
 import {
 	EASY_WORD_WAIT_SECS,
 	HARD_WORD_WAIT_SECS,
+	HAS_LIGHTNING_ROUND,
 	MAX_ROUND_ID,
 	PRE_PLAY_WAIT_SECS,
 	UNREADY_PLAYER_WAIT_SECS,
@@ -484,11 +485,20 @@ function generateResponse(
 		const playEndsAt = secondsFromNow(waitSeconds);
 		serverGameContext.serverState.timerId = delayedEmit((emit) => {
 			clearTimeout(serverGameContext.serverState.timerId);
-			const postRoundEvent: ChangeRoundPhaseEvent = {
+			let phaseChangeEvent: GameEvent = {
 				type: 'round-phase',
 				data: 'post-round',
 			};
-			const event = batch(executeServerGameEvent(serverGameContext, postRoundEvent, delayedEmit));
+			// if this is the last round, and we have no lightning round,
+			// then we actually just want to jump ahead to the post-game
+			// screen
+			if (!HAS_LIGHTNING_ROUND && serverGameContext.gameState.round === MAX_ROUND_ID) {
+				phaseChangeEvent = {
+					type: 'game-phase',
+					data: 'post-game',
+				};
+			}
+			const event = batch(executeServerGameEvent(serverGameContext, phaseChangeEvent, delayedEmit));
 			if (event) {
 				emit(event);
 			}
