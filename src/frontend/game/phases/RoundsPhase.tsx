@@ -5,6 +5,9 @@ import { PrintClientContext } from 'src/frontend/game/components/PrintClientCont
 import { ContextualTimer } from 'src/frontend/game/components/ContextualTimer.tsx';
 import { PrintConstants } from 'src/frontend/game/components/PrintConstants.tsx';
 import { ChooseWord } from 'src/frontend/game/components/ChooseWord.tsx';
+import { WordClue } from 'src/frontend/game/components/WordClue.tsx';
+import { Ready } from '../components/Ready';
+import { ReadyCount } from '../components/ReadyCount';
 
 export const RoundsPhase: FunctionalComponent = () => {
 	const { clientContext } = useClientContext();
@@ -17,6 +20,15 @@ export const RoundsPhase: FunctionalComponent = () => {
 			<h3>
 				<ContextualTimer />
 			</h3>
+			<h3>
+				<WordClue />
+			</h3>
+			{currentRoundPhase === 'post-round' && (
+				<>
+					<Ready />
+					<ReadyCount />
+				</>
+			)}
 			<ChooseWord />
 			<PlayerList />
 			<PrintClientContext />

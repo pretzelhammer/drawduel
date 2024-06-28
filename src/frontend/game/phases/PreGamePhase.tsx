@@ -12,10 +12,10 @@ export const PreGamePhase: FunctionalComponent = () => {
 	return (
 		<>
 			<h2>pre-game page</h2>
-			<PlayerList />
+			<ContextualTimer />
 			<Ready />
 			<ReadyCount />
-			<ContextualTimer />
+			<PlayerList />
 			<ChangeName />
 			<IncreaseMyScore />
 			<PrintClientContext />

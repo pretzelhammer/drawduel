@@ -97,6 +97,10 @@ const ClientContextProvider: FunctionalComponent = ({ children }) => {
 					setClientContext((currentClientContext) => updateClientContext(currentClientContext, event));
 			}
 		});
+		return () => {
+			socket.current?.disconnect();
+			socket.current = null;
+		};
 	}, []);
 
 	const dispatchClientEvent = (event: ClientEvent) => {

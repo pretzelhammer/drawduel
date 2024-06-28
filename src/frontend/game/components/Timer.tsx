@@ -12,7 +12,7 @@ export const Timer: FunctionalComponent<TimerProps> = ({ message }) => {
 	const endsAt = clientContext.gameState.timer;
 	// 0 means no timer is active
 	if (endsAt === 0) {
-		return <span></span>;
+		return <span>waiting for players to ready...</span>;
 	}
 
 	const [secondsLeft, setSecondsLeft] = useState(secondsUntil(endsAt));
@@ -25,7 +25,7 @@ export const Timer: FunctionalComponent<TimerProps> = ({ message }) => {
 			} else {
 				setSecondsLeft(timeRemaining);
 			}
-		}, 500);
+		}, 200);
 
 		return () => clearInterval(timer);
 	}, [clientContext.gameState.timer]);

@@ -41,7 +41,7 @@ if (process.env.NODE_ENV === 'development') {
 	// of the game in dev
 	MAX_ROUNDS = 2;
 	HAS_LIGHTNING_ROUND = false; // not implemented
-	UNREADY_PLAYER_WAIT_SECS = 1;
+	UNREADY_PLAYER_WAIT_SECS = 5;
 	WORD_CHOICE_WAIT_SECS = 20;
 	PRE_PLAY_WAIT_SECS = 5;
 	EASY_WORD_WAIT_SECS = 40;

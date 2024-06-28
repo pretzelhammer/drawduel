@@ -8,7 +8,7 @@ export const ChooseWord: FunctionalComponent = () => {
 	const me = clientContext.gameState.players[myId];
 	const roundId = clientContext.gameState.round;
 	const currentRound = clientContext.gameState.rounds[roundId];
-	if (myId !== currentRound.chooser) {
+	if (myId !== currentRound.chooser || currentRound.phase !== 'choose-word') {
 		return <div></div>;
 	}
 	const choices = currentRound.choices;

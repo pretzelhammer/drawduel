@@ -2,14 +2,15 @@ import { type FunctionalComponent } from 'preact';
 import { useClientContext } from 'src/frontend/game/context/ClientContextProvider.tsx';
 import { Timer } from 'src/frontend/game/components/Timer.tsx';
 import { type PlayerRole } from 'src/agnostic/gameState.ts';
+import { HAS_LIGHTNING_ROUND, MAX_ROUND_ID } from 'src/agnostic/constants';
 
 function roleToVerb(role: PlayerRole): string {
 	if (role === 'drawer') {
-		return 'drawing';
+		return 'draw';
 	} else if (role === 'guesser') {
-		return 'guessing';
+		return 'guess';
 	} else if (role === 'spectator') {
-		return 'spectating';
+		return 'spectate';
 	}
 	return '???';
 }
@@ -28,11 +29,13 @@ export const ContextualTimer: FunctionalComponent = () => {
 			let chooserPlayer = clientContext.gameState.players[currentRound.chooser];
 			message = `${chooserPlayer.name} is choosing a word in`;
 		} else if (currentRound.phase === 'pre-play') {
-			message = `get ready to start ${roleToVerb(me.role)} in`;
+			message = `get ready to ${roleToVerb(me.role)} in`;
+		} else if (currentRound.phase === 'play') {
+			message = `${roleToVerb(me.role)} the word in`;
 		} else if (currentRound.phase === 'post-round') {
-			if (roundId < 14) {
+			if (roundId < MAX_ROUND_ID) {
 				message = 'next round starts in';
-			} else {
+			} else if (HAS_LIGHTNING_ROUND) {
 				message = 'lightning round starts in';
 			}
 		}

@@ -33,6 +33,8 @@ import { pickRandomItem, randomWordChoices } from 'src/agnostic/random.ts';
 import { type Ms, msUntil, now, secondsFromNow, secondsToMs } from 'src/agnostic/time.ts';
 import { isFunction } from 'lodash-es';
 import {
+	EASY_WORD_WAIT_SECS,
+	HARD_WORD_WAIT_SECS,
 	MAX_ROUND_ID,
 	PRE_PLAY_WAIT_SECS,
 	UNREADY_PLAYER_WAIT_SECS,
@@ -212,11 +214,13 @@ function hasPermission(playerId: PlayerId, serverGameContext: ServerGameContext,
 		return false;
 	}
 	if (gameEvent.type === 'join') {
-		// players can only join themselves
-		return playerId === gameEvent.data.id;
+		// only server can issue this event
+		// issues in response to player connecting
+		return false;
 	} else if (gameEvent.type === 'left') {
-		// players can only leave themselves
-		return playerId === gameEvent.data;
+		// only server can issue this event
+		// issues in response to player disconnecting
+		return false;
 	} else if (gameEvent.type === 'inc-player-score') {
 		// atm we have a button that allows players
 		// to increase their own score but it's just for
@@ -283,7 +287,7 @@ function advanceServerGame(serverGameContext: ServerGameContext, gameEvent: Game
  * returns unchecked unexecuted unemitted events
  */
 function nextRoundEvents(serverGameContext: ServerGameContext, delayedEmit: DelayedEventEmitter): GameEvent[] {
-	const nextRoundEvents: GameEvent[] = [];
+	// const nextRoundEvents: GameEvent[] = [];
 	const drawers = selectDrawersForRound(serverGameContext);
 	const chooser = pickRandomItem(drawers);
 	const choices = randomWordChoices();
@@ -295,31 +299,7 @@ function nextRoundEvents(serverGameContext: ServerGameContext, delayedEmit: Dela
 			choices,
 		},
 	};
-	nextRoundEvents.push(newRound);
-	const wordChoiceEndsAt = secondsFromNow(WORD_CHOICE_WAIT_SECS);
-	nextRoundEvents.push({
-		type: 'timer',
-		data: wordChoiceEndsAt,
-	});
-	serverGameContext.serverState.timerId = delayedEmit((emit) => {
-		clearTimeout(serverGameContext.serverState.timerId);
-		const prePlayEvents: GameEvent[] = [];
-		prePlayEvents.push({
-			type: 'round-phase',
-			data: 'pre-play',
-		});
-		const prePlayEndsAt = secondsFromNow(PRE_PLAY_WAIT_SECS);
-		prePlayEvents.push({
-			type: 'timer',
-			data: prePlayEndsAt,
-		});
-		const event = batch(executeServerGameEvents(serverGameContext, prePlayEvents, delayedEmit));
-		if (event) {
-			emit(event);
-		}
-		// TODO set timer to end pre-play
-	}, wordChoiceEndsAt - now());
-	return nextRoundEvents;
+	return [newRound];
 }
 
 /**
@@ -358,53 +338,35 @@ function nextPhaseEvents(serverGameContext: ServerGameContext, delayedEmit: Dela
  * or all players ready then game phase advances
  */
 function hasResponse(serverGameContext: ServerGameContext, gameEvent: GameEvent): boolean {
+	const gamePhase = serverGameContext.gameState.phase;
 	if (gameEvent.type === 'ready') {
 		// if players are readying it means
 		// we need to set or update the
 		// next-phase timer
 		return true;
-	}
-	const gamePhase = serverGameContext.gameState.phase;
-	if (gameEvent.type === 'join' && gamePhase === 'pre-game') {
+	} else if (gameEvent.type === 'join' && gamePhase === 'pre-game') {
 		// player joining in pre-game phase triggers
 		// a team rebalance
 		return true;
-	}
-	if (gameEvent.type === 'left' && gamePhase === 'pre-game') {
+	} else if (gameEvent.type === 'left' && gamePhase === 'pre-game') {
 		// player leaving in pre-game phase triggers
 		// a team rebalance
+		return true;
+	} else if (gameEvent.type === 'new-round') {
+		// if new round is being created we need to set
+		// timer for first round-phase
+		return true;
+	} else if (gameEvent.type === 'round-phase' && gameEvent.data !== 'post-round') {
+		// all round phases that aren't post-round have an automatic timer
+		// so we need to set one if we get this event
+		return true;
+	} else if (gameEvent.type === 'choose') {
+		// when chooser chooses we immediately start pre-play round phase
+		// without waiting for current timer to complete
 		return true;
 	}
 	return false;
 }
-
-// /**
-//  *
-//  * uhhh, maybe come back to this, or not
-//  *
-//  * true if the game event causes the server to generate
-//  * additional game events, called response events
-//  * EVEN IF the game event DID NOT cause a change in
-//  * the game state
-//  * example: choosers chooses the easy word, but the easy word
-//  * is already the default word choice, regardless we
-//  * need to end the choose-word round phase timer and move
-//  * to the pre-play phase
-//  */
-// function hasSideEffectResponse(serverGameContext: ServerGameContext, gameEvent: GameEvent): boolean {
-// 	if (gameEvent.type === 'choose') {
-// 		// if a choice has been made, even if it's the same
-// 		// as the default word choice, we need to advance
-// 		// the round phase
-// 		const gameState = serverGameContext.gameState;
-// 		if (gameState.phase !== 'rounds') {
-// 			return false;
-// 		}
-// 		// blah blah blah
-// 		return true;
-// 	}
-// 	return false;
-// }
 
 /**
  * returns unchecked unexecuted unemitted events
@@ -415,12 +377,18 @@ function generateResponse(
 	gameEvent: GameEvent,
 	delayedEmit: DelayedEventEmitter,
 ): GameEvent[] {
+	// only put unchecked unexecuted unemitted events here
 	const responseEvents: GameEvent[] = [];
+	// players can only ready in the pre-game,
+	// rounds.post-round, or post-game phase
 	if (gameEvent.type === 'ready') {
 		const players = Object.values(serverGameContext.gameState.players);
+		let readyPlayers = 0;
 		let unreadyConnectedPlayers = 0;
 		for (let player of players) {
-			if (!player.ready && player.connected) {
+			if (player.ready) {
+				readyPlayers += 1;
+			} else if (player.connected) {
 				unreadyConnectedPlayers += 1;
 			}
 		}
@@ -434,39 +402,111 @@ function generateResponse(
 		} else {
 			// auto-start next phase without waiting for all players to ready
 			const fullDuration = secondsToMs(unreadyConnectedPlayers * UNREADY_PLAYER_WAIT_SECS);
-			if (!serverGameContext.serverState.recalcTimerFrom) {
+
+			// if this is the first player to ready then set the
+			// recalc timer from variable to now
+			if (readyPlayers === 1) {
 				serverGameContext.serverState.recalcTimerFrom = now();
 			}
+
+			// calc when the current phase should env / next phase should start
 			const endsAt = serverGameContext.serverState.recalcTimerFrom + fullDuration;
-			serverGameContext.serverState.timerId = delayedEmit((emit) => {
-				const phaseEvents = nextPhaseEvents(serverGameContext, delayedEmit);
-				const toEmit: GameEvent[] = [];
-				for (let phaseEvent of phaseEvents) {
-					if (canAdvanceServerGame(serverGameContext, phaseEvent)) {
-						advanceServerGame(serverGameContext, phaseEvent);
-						toEmit.push(phaseEvent);
+			const remainingDuration = msUntil(endsAt);
+			if (remainingDuration <= 0) {
+				responseEvents.push(...nextPhaseEvents(serverGameContext, delayedEmit));
+			} else {
+				serverGameContext.serverState.timerId = delayedEmit((emit) => {
+					clearTimeout(serverGameContext.serverState.timerId);
+					const phaseEvents = nextPhaseEvents(serverGameContext, delayedEmit);
+					const event = batch(executeServerGameEvents(serverGameContext, phaseEvents, delayedEmit));
+					if (event) {
+						emit(event);
 					}
-				}
-				if (toEmit.length > 0) {
-					if (toEmit.length === 1) {
-						emit(toEmit[0]);
-					} else {
-						emit({
-							type: 'batch',
-							data: toEmit,
-						});
-					}
-				}
-			}, msUntil(endsAt));
-			// notify players of auto-start timeout
-			responseEvents.push({
-				type: 'timer',
-				data: endsAt,
-			});
+				}, remainingDuration);
+				// notify players of when next phase auto-starts
+				responseEvents.push({
+					type: 'timer',
+					data: endsAt,
+				});
+			}
 		}
 	} else if (gameEvent.type === 'join' || gameEvent.type === 'left') {
+		// when players join and leave in the pre-game phase
+		// we have to rebalance the teams to keep them roughly even
 		const rebalanceEvents: JoinTeamEvent[] = rebalanceTeams(serverGameContext);
 		responseEvents.push(...rebalanceEvents);
+	} else if (gameEvent.type === 'new-round') {
+		// set timer for choose-word phase to end
+		const wordChoiceEndsAt = secondsFromNow(WORD_CHOICE_WAIT_SECS);
+		serverGameContext.serverState.timerId = delayedEmit((emit) => {
+			clearTimeout(serverGameContext.serverState.timerId);
+			const prePlayEvent: ChangeRoundPhaseEvent = {
+				type: 'round-phase',
+				data: 'pre-play',
+			};
+			const event = batch(executeServerGameEvent(serverGameContext, prePlayEvent, delayedEmit));
+			if (event) {
+				emit(event);
+			}
+		}, msUntil(wordChoiceEndsAt));
+		// notify players when next round phase begins
+		responseEvents.push({
+			type: 'timer',
+			data: wordChoiceEndsAt,
+		});
+	} else if (gameEvent.type === 'round-phase' && gameEvent.data === 'pre-play') {
+		// set timer for pre-play phase to end
+		const prePlayEndsAt = secondsFromNow(PRE_PLAY_WAIT_SECS);
+		serverGameContext.serverState.timerId = delayedEmit((emit) => {
+			clearTimeout(serverGameContext.serverState.timerId);
+			const playEvent: ChangeRoundPhaseEvent = {
+				type: 'round-phase',
+				data: 'play',
+			};
+			const event = batch(executeServerGameEvent(serverGameContext, playEvent, delayedEmit));
+			if (event) {
+				emit(event);
+			}
+		}, msUntil(prePlayEndsAt));
+		// notify players when next round phase begins
+		responseEvents.push({
+			type: 'timer',
+			data: prePlayEndsAt,
+		});
+	} else if (gameEvent.type === 'round-phase' && gameEvent.data === 'play') {
+		// set timer for play phase to end
+		let waitSeconds = EASY_WORD_WAIT_SECS;
+		const currentRoundId = serverGameContext.gameState.round;
+		const currentRound = serverGameContext.gameState.rounds[currentRoundId];
+		if (currentRound.word.difficulty === 'hard') {
+			waitSeconds = HARD_WORD_WAIT_SECS;
+		}
+		const playEndsAt = secondsFromNow(waitSeconds);
+		serverGameContext.serverState.timerId = delayedEmit((emit) => {
+			clearTimeout(serverGameContext.serverState.timerId);
+			const postRoundEvent: ChangeRoundPhaseEvent = {
+				type: 'round-phase',
+				data: 'post-round',
+			};
+			const event = batch(executeServerGameEvent(serverGameContext, postRoundEvent, delayedEmit));
+			if (event) {
+				emit(event);
+			}
+		}, msUntil(playEndsAt));
+		// notify players when next round phase begins
+		responseEvents.push({
+			type: 'timer',
+			data: playEndsAt,
+		});
+	} else if (gameEvent.type === 'choose') {
+		// clear choose words timer, since word was chosen
+		clearTimeout(serverGameContext.serverState.timerId);
+		// immediately go to pre-play phase
+		const prePlayEvent: ChangeRoundPhaseEvent = {
+			type: 'round-phase',
+			data: 'pre-play',
+		};
+		responseEvents.push(prePlayEvent);
 	}
 	return responseEvents;
 }
@@ -751,11 +791,6 @@ function executeServerGameEvent(
 			executedEvents.push(...executeServerGameEvents(serverGameContext, responseEvents, delayedEmit));
 		}
 	}
-	// maybe come back to this... or dont
-	// else if (hasSideEffectResponse(serverGameContext, gameEvent)) {
-	// 	const responseEvents = generateResponse(serverGameContext, gameEvent, delayedEmit);
-	// 	executedEvents.push(...executeServerGameEvents(serverGameContext, responseEvents, delayedEmit));
-	// }
 	return executedEvents;
 }
 
