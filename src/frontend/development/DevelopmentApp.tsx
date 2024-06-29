@@ -5,6 +5,8 @@ import { Round } from 'src/frontend/game/Round.tsx';
 import { useState } from 'preact/hooks';
 import { Brush, DrawData } from 'src/frontend/components/Canvas.tsx';
 import { Color, Size } from 'src/frontend/components/DrawStage.tsx';
+import { StatefulCanvas } from '../components/StatefulCanvas';
+import { NoReRenderCanvas } from '../components/NoReRenderCanvas';
 
 export enum GameMode {
 	SingleTeam = 'GAME_MODE_SINGLE_TEAM',
@@ -37,6 +39,8 @@ export const DevelopmentApp: FunctionalComponent = () => {
 	});
 	return (
 		<ClientContextProvider>
+			<NoReRenderCanvas />
+
 			<button onClick={onSingleTeamClick}>Single Team</button>
 			<button class="button--purple" onClick={onMultiTeamClick}>
 				Multi Team
