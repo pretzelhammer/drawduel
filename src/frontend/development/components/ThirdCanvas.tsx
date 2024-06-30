@@ -193,17 +193,21 @@ export class ThirdCanvas extends Component<ThirdCanvasProps> {
 		window.removeEventListener('resize', this.handleResize);
 	}
 
-	componentWillUpdate(nextProps: Readonly<ThirdCanvasProps>, nextState: Readonly<{}>, nextContext: any): void {
+	componentWillUpdate(_nextProps: Readonly<ThirdCanvasProps>, _nextState: Readonly<{}>, _nextContext: any): void {
 		// console.log('will update', this.props.lineType, { nextProps, nextState, nextContext });
 	}
 
 	// this never gets called wtf?
-	shouldComponentUpdate(nextProps: Readonly<ThirdCanvasProps>, nextState: Readonly<{}>, nextContext: any): boolean {
+	shouldComponentUpdate(
+		_nextProps: Readonly<ThirdCanvasProps>,
+		_nextState: Readonly<{}>,
+		_nextContext: any,
+	): boolean {
 		// console.log('should update', this.props.lineType, { nextProps, nextState, nextContext });
 		return false;
 	}
 
-	componentDidUpdate(previousProps: Readonly<ThirdCanvasProps>, previousState: Readonly<{}>, snapshot: any): void {
+	componentDidUpdate(_previousProps: Readonly<ThirdCanvasProps>, _previousState: Readonly<{}>, _snapshot: any): void {
 		// console.log('did update', this.props.lineType, { previousProps, previousState, snapshot });
 		this.redrawCanvas();
 	}
