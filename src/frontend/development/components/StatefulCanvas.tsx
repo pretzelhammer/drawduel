@@ -3,6 +3,12 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { Maybe } from 'src/agnostic/types';
 import classes from 'src/frontend/components/Canvas.module.css';
 
+/**
+ * my first attempt at the canvas component
+ * - it sucks, i broke it and am too lazy
+ *   to figure out how to fix it
+ */
+
 interface CanvasState {
 	drawEvents: DrawEvent[];
 }

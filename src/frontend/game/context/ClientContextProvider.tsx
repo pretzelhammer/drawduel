@@ -116,7 +116,7 @@ const ClientContextProvider: FunctionalComponent = ({ children }) => {
 	};
 
 	const setClientState = (clientState: ClientState) => {
-		console.log('setting client state', clientState);
+		// console.log('setting client state', clientState);
 		setClientContext((currentClientContext) => ({
 			...currentClientContext,
 			clientState,
@@ -146,4 +146,4 @@ const ClientContextProvider: FunctionalComponent = ({ children }) => {
 	);
 };
 
-export { ClientContextProvider, useClientContext };
+export { ClientContextProvider, useClientContext, ClientContextKey };

@@ -23,6 +23,7 @@ export interface ClientState {
 	route: Route;
 	clientErrors: ClientError[];
 	serverErrors: ServerError[];
+	draw: any[];
 }
 
 export interface ClientPlayerState {
@@ -48,6 +49,7 @@ export function dummyClientState(): ClientState {
 		route: Route.Lobby,
 		clientErrors: [],
 		serverErrors: [],
+		draw: [],
 	};
 }
 
@@ -73,6 +75,7 @@ function initClientState(): ClientState {
 		route: Route.Lobby,
 		clientErrors: [],
 		serverErrors: [],
+		draw: [],
 	};
 }
 
