@@ -8,6 +8,7 @@ import { Color, Size } from 'src/frontend/components/DrawStage.tsx';
 import { StatefulCanvas } from './components/StatefulCanvas';
 import { NoReRenderCanvas } from './components/NoReRenderCanvas';
 import { ThirdCanvas } from './components/ThirdCanvas';
+import { FourthCanvas } from './components/FourthCanvas';
 
 export enum GameMode {
 	SingleTeam = 'GAME_MODE_SINGLE_TEAM',
@@ -42,11 +43,11 @@ export const DevelopmentApp: FunctionalComponent = () => {
 		<ClientContextProvider>
 			<div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
 				<div style={{ width: '50%' }}>
-					<ThirdCanvas lineType={'smooth'} />
+					<FourthCanvas lineType={'smooth'} />
 				</div>
 				<div style={{ width: '25%' }}>
-					<ThirdCanvas lineType={'smooth'} />
-					<ThirdCanvas lineType={'antialiased-pixelated'} />
+					<FourthCanvas lineType={'smooth'} />
+					<FourthCanvas lineType={'antialiased-pixelated'} />
 				</div>
 			</div>
 			{/* <NoReRenderCanvas /> */}
