@@ -43,11 +43,11 @@ export const DevelopmentApp: FunctionalComponent = () => {
 		<ClientContextProvider>
 			<div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
 				<div style={{ width: '50%' }}>
-					<FourthCanvas lineType={'smooth'} />
+					<FourthCanvas lineType={'smooth'} mode={'draw'} />
 				</div>
 				<div style={{ width: '25%' }}>
-					<FourthCanvas lineType={'smooth'} />
-					<FourthCanvas lineType={'antialiased-pixelated'} />
+					<FourthCanvas lineType={'pixelated'} mode={'view'} />
+					<FourthCanvas lineType={'antialiased-pixelated'} mode={'view'} />
 				</div>
 			</div>
 			{/* <NoReRenderCanvas /> */}

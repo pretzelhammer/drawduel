@@ -142,8 +142,11 @@ const contextSettings: CanvasRenderingContext2DSettings = {
 
 export type LineType = 'smooth' | 'pixelated' | 'antialiased-pixelated';
 
+export type CanvasMode = 'draw' | 'view';
+
 export interface FourthCanvasProps {
 	lineType: LineType;
+	mode: CanvasMode;
 }
 
 interface InternalRef {
@@ -155,6 +158,7 @@ interface InternalRef {
 	drewOps: number;
 	lastX: number;
 	lastY: number;
+	mode: CanvasMode;
 	redrawCanvas: () => void;
 }
 
@@ -172,6 +176,7 @@ export const FourthCanvas: FunctionalComponent<FourthCanvasProps> = (props: Four
 		dispatchClientEvent,
 		setClientState,
 		lineType: props.lineType,
+		mode: props.mode,
 		isDrawing: false,
 		drewOps: 0,
 		lastX: 0,
@@ -182,7 +187,11 @@ export const FourthCanvas: FunctionalComponent<FourthCanvasProps> = (props: Four
 	internalRef.current.clientContext = clientContext;
 	internalRef.current.dispatchClientEvent = dispatchClientEvent;
 	internalRef.current.setClientState = setClientState;
-	internalRef.current.lineType = props.lineType;
+	if (internalRef.current.lineType !== props.lineType) {
+		internalRef.current.lineType = props.lineType;
+		internalRef.current.drewOps = 0;
+	}
+
 
 	useEffect(() => {
 		const canvas = canvasRef.current;
@@ -203,8 +212,6 @@ export const FourthCanvas: FunctionalComponent<FourthCanvasProps> = (props: Four
 			internal.isDrawing = true;
 			const x = e.offsetX / canvas!.width;
 			const y = e.offsetY / canvas!.height;
-			// internal.lastX = x;
-			// internal.lastY = y;
 			const drawOp = [DrawAction.StartStroke, x, y];
 			internal.setClientState({
 				...internal.clientContext.clientState,
@@ -222,8 +229,6 @@ export const FourthCanvas: FunctionalComponent<FourthCanvasProps> = (props: Four
 				...internal.clientContext.clientState,
 				draw: [...internal.clientContext.clientState.draw, drawOp],
 			});
-			// internal.lastX = x;
-			// internal.lastY = y;
 			redrawCanvas();
 		}
 
@@ -278,8 +283,6 @@ export const FourthCanvas: FunctionalComponent<FourthCanvasProps> = (props: Four
 					targetX2 = Math.round(drawOp[1] * canvasWidth);
 					targetY2 = Math.round(drawOp[2] * canvasHeight);
 				} else if (drawOp[0] === DrawAction.EndStroke) {
-					// lastX = 0;
-					// lastY = 0;
 					// no-op
 					continue;
 				}
@@ -291,19 +294,18 @@ export const FourthCanvas: FunctionalComponent<FourthCanvasProps> = (props: Four
 				} else if (internal.lineType === 'antialiased-pixelated') {
 					drawAntiAliasedPixelatedLine(context, pixelSize, targetX1, targetY1, targetX2, targetY2);
 				}
-
-				// lastX = targetX2;
-				// lastY = targetY2;
 			}
 			internal.drewOps = drawOps.length;
 		}
 
 		internalRef.current.redrawCanvas = redrawCanvas;
 
-		canvas.addEventListener('mousedown', startDrawing);
-		canvas.addEventListener('mousemove', draw);
-		canvas.addEventListener('mouseup', stopDrawing);
-		canvas.addEventListener('mouseout', stopDrawing);
+		if (internalRef.current.mode === 'draw') {
+			canvas.addEventListener('mousedown', startDrawing);
+			canvas.addEventListener('mousemove', draw);
+			canvas.addEventListener('mouseup', stopDrawing);
+			canvas.addEventListener('mouseout', stopDrawing);
+		}
 		window.addEventListener('resize', onResize);
 
 		onResize();
@@ -315,7 +317,7 @@ export const FourthCanvas: FunctionalComponent<FourthCanvasProps> = (props: Four
 			canvas.removeEventListener('mouseout', stopDrawing);
 			window.removeEventListener('resize', onResize);
 		};
-	}, [canvasRef.current]);
+	}, [canvasRef.current, props.mode]);
 
 	internalRef.current.redrawCanvas();
 
